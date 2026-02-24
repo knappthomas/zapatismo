@@ -32,7 +32,7 @@ This document defines **global rules and conventions** for the Zapatismo project
 
 - Use the **monorepo** structure: `apps/backend`, `apps/frontend`, `packages/`, `prisma/`, `docs/`.
 - **Commit small, logical units.** One concern per commit where possible.
-- **No committed secrets.** Use environment variables and `.env` (with `.env` in `.gitignore`). Provide `.env.example` for required keys.
+- **No committed secrets.** Use environment variables and `.env` (with `.env` in `.gitignore`). Provide `.env.development` for required keys.
 - **Branch strategy:** `development` is the main branch for development. All new work—features, bug fixes, refactors, etc.—must be done in a dedicated branch (e.g. `feature/...`, `bugfix/...`, `hotfix/...`). **Creating a Pull Request (PR) into `development` is mandatory** before any such work is merged.
 - **Documentation** that affects the whole project lives under `docs/` and is updated when behavior or architecture changes.
 
@@ -105,7 +105,7 @@ This document defines **global rules and conventions** for the Zapatismo project
 - **Secrets in environment only.** No API keys, passwords, or tokens in code or in committed config files.
 - **Sensitive data:** Do not log request/response bodies that may contain PII or credentials; redact where necessary.
 - **Dependencies:** Keep frameworks and libraries up to date; address known vulnerabilities in a timely manner.
-- **Production vs. local:** Strict separation: production config and secrets are never committed; local defaults are safe and documented in `.env.example`.
+- **Production vs. local:** Strict separation: production config and secrets are never committed; local defaults are safe and documented in `.env.development`.
 
 ---
 

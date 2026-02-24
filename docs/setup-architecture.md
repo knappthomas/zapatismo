@@ -168,7 +168,7 @@ This keeps the UI minimal and consistent without custom design system work in ea
 
 ### 3.5 iOS App (Workout Data Source)
 
-**Native iOS app (Swift), in `apps/app/`**
+**Native iOS app (Swift), in `apps/app-ios/`**
 
 Apple does not provide a server-side or REST-based HealthKit API. Workout data lives only on the user’s iPhone (and Apple Watch); access requires an app running on the device with HealthKit entitlements and user authorization.
 
