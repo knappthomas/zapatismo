@@ -1,0 +1,86 @@
+---
+description: Cypress E2E testing conventions – component coverage, fixtures, one smoke test
+globs: apps/frontend/cypress/**
+alwaysApply: false
+---
+
+# Cypress E2E Testing
+
+- **Every component/feature must have E2E tests.** No Cypress component tests; use E2E only.
+- **Specs in feature subfolders** – put each feature’s spec under `cypress/e2e/<feature>/<feature>.cy.ts` (e.g. `e2e/login/login.cy.ts`). Do not put specs directly under `e2e/`.
+- **Page objects next to the spec** – put page objects for a feature in `cypress/e2e/<feature>/po/` (e.g. `e2e/login/po/LoginPO.ts`). They must extend `MainPO` from `cypress/page-objects/MainPO.ts` and use `protected` root (getter) for scoped queries.
+- **One smoke test only** – a single smoke test that checks the app loads and basic connection works (e.g. inside a feature spec under a `Smoke` describe block). No duplicate “app is up” tests elsewhere.
+- **Component states via fixtures** – drive different UI states (empty, loading, loaded, error) with fixture data. Do not hardcode state in specs.
+- **Organize fixtures in subfolders** – under `cypress/fixtures/`, use one subfolder per feature or component (e.g. `fixtures/dashboard/`, `fixtures/login/`). Keep fixture files small and named by state (e.g. `empty.json`, `list.json`, `error-404.json`).
+- **Server errors and exceptions** – test error/exception paths with fixtures (e.g. 4xx/5xx responses). Use `cy.intercept()` with fixture responses to simulate server failures and assert error UI/messages.
+
+**Example folder layout:**
+
+```
+cypress/e2e/
+  login/
+    login.cy.ts
+    po/
+      LoginPO.ts
+  dashboard/
+    dashboard.cy.ts
+    po/
+      DashboardPO.ts
+cypress/page-objects/
+  MainPO.ts
+```
+
+**Example page object (in `e2e/login/po/LoginPO.ts`, extends MainPO):**
+
+```typescript
+import { MainPO } from '../../../page-objects/MainPO';
+
+export class LoginPO extends MainPO {
+  constructor() {
+    super('[data-cy="login"]');
+  }
+  get emailInput() {
+    return this.root.find('[data-cy="login-email"]');
+  }
+}
+```
+
+**Example spec (in `e2e/login/login.cy.ts`):**
+
+```typescript
+import { LoginPO } from './po/LoginPO';
+
+describe('Login', () => {
+  const po = new LoginPO();
+  // ...
+});
+```
+
+**Example fixture layout:**
+
+```
+cypress/fixtures/
+  login/
+    success.json
+    error-401.json
+  dashboard/
+    empty.json
+    with-data.json
+  users/
+    list.json
+    error-500.json
+```
+
+**Example: E2E spec using fixtures and error fixture:**
+
+```typescript
+// Load success state from fixture
+cy.intercept('GET', '/api/dashboard', { fixture: 'dashboard/with-data.json' });
+cy.visit('/dashboard');
+cy.get('[data-cy="dashboard-content"]').should('be.visible');
+
+// Test error state
+cy.intercept('GET', '/api/dashboard', { statusCode: 500, fixture: 'dashboard/error-500.json' });
+cy.reload();
+cy.get('[data-cy="error-message"]').should('contain', 'Something went wrong');
+```

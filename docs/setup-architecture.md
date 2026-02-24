@@ -339,6 +339,22 @@ No manual DB setup steps (e.g., no hand-run SQL for schema).
 
 ---
 
+### 6.4 Frontend E2E tests (Cypress)
+
+E2E tests live in `apps/frontend/cypress/` and are run with Cypress.
+
+**Run assumptions:**
+
+- The frontend must be running (e.g. `ng serve` in `apps/frontend`, typically at `http://localhost:4200`) when running E2E tests.
+- For flows that call the API, the backend must be running (e.g. Docker or local on port 3000).
+
+**Commands (from `apps/frontend`):**
+
+- `npm run e2e` — opens the Cypress UI for developing and debugging tests.
+- `npm run e2e:run` — runs tests headlessly (suitable for CI).
+
+---
+
 ## 7. Hosting Strategy (Initial Direction)
 
 The system is designed for:

@@ -12,7 +12,8 @@
     "prisma:reset": "npx prisma migrate reset",
     "prisma:reset:force": "npx prisma migrate reset --force",
     "prisma:reset:full": "npx prisma migrate reset --force && NODE_ENV=development npm run prisma:test-migrations",
-    "prisma:test-migrations": "ts-node scripts/run-test-migrations.ts"
+    "prisma:test-migrations": "ts-node scripts/run-test-migrations.ts",
+    "e2e:frontend": "npm run e2e -w frontend"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

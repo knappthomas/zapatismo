@@ -46,13 +46,10 @@ ng test
 
 ## Running end-to-end tests
 
-For end-to-end (e2e) testing, run:
+E2E tests use [Cypress](https://www.cypress.io/) and live in the `cypress/` folder. Ensure the frontend is running (`ng serve`) and, for flows that use the API, the backend is running (e.g. Docker). Then, from `apps/frontend`:
 
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+- **Interactive (develop/debug):** `npm run e2e` — opens the Cypress UI.
+- **Headless (CI):** `npm run e2e:run` — runs all E2E specs without the UI.
 
 ## Additional Resources
 

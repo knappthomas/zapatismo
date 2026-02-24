@@ -10,12 +10,12 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [ReactiveFormsModule],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-base-200">
-      <div class="card w-full max-w-sm bg-base-100 shadow-xl">
+      <div class="card w-full max-w-sm bg-base-100 shadow-xl" data-cy="login">
         <div class="card-body">
           <h2 class="card-title justify-center text-2xl mb-4">Zapatismo</h2>
 
           @if (errorMessage()) {
-            <div role="alert" class="alert alert-error mb-4">
+            <div role="alert" class="alert alert-error mb-4" data-cy="login-error">
               <span>{{ errorMessage() }}</span>
             </div>
           }
@@ -29,6 +29,7 @@ import { AuthService } from '../../core/auth/auth.service';
                   formControlName="email"
                   class="input input-bordered w-full"
                   placeholder="Email"
+                  data-cy="login-email"
                 />
               </label>
 
@@ -39,10 +40,11 @@ import { AuthService } from '../../core/auth/auth.service';
                   formControlName="password"
                   class="input input-bordered w-full"
                   placeholder="Password"
+                  data-cy="login-password"
                 />
               </label>
 
-              <button type="submit" class="btn btn-primary w-full" [disabled]="form.invalid">
+              <button type="submit" class="btn btn-primary w-full" [disabled]="form.invalid" data-cy="login-submit">
                 @if (loading()) {
                   <span class="loading loading-spinner loading-sm"></span>
                 }
