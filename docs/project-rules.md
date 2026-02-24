@@ -46,6 +46,7 @@ This document defines **global rules and conventions** for the Zapatismo project
 - **No manual edits to existing migration files** after they have been applied (or shared). Fix forward with new migrations.
 - **Reproducibility:** A fresh database must be reproducible by running migrations from the repo (no hidden manual steps).
 - **Naming:** Use clear, consistent names for tables and columns (e.g. `snake_case` if that’s the project convention; align with Prisma defaults).
+- **Test migrations:** Data-only migrations in `prisma/test-migrations/` are for local and CI/stage only; they must never alter schema and must never run in production. See [backend.md](./backend.md#test-migrations-devstage-only).
 
 ---
 

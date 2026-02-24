@@ -22,3 +22,11 @@ model User {
 
   @@map("users")
 }
+
+// Tracks applied test migrations (data-only, dev/stage). Do not use for app logic.
+model TestMigration {
+  name      String   @id
+  appliedAt DateTime @default(now()) @map("applied_at")
+
+  @@map("_test_migrations")
+}

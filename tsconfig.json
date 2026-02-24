@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "outDir": "./dist"
   },
-  "include": ["prisma/**/*.ts"]
+  "include": ["prisma/**/*.ts","scripts/**/*.ts"]
 }

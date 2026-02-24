@@ -25,7 +25,7 @@ Use this as the steering context for every chat. Full details: `docs/project-rul
 
 | Area | Rule |
 |------|------|
-| **Migrations** | Prisma Migrate only. Edit `schema.prisma` → `npx prisma migrate dev --name <description>` → commit. No manual SQL on prod; no edits to applied migrations. |
+| **Migrations** | Prisma Migrate only. Edit `schema.prisma` → `npx prisma migrate dev --name <description>` → commit. No manual SQL on prod; no edits to applied migrations. Test migrations (`prisma/test-migrations/`) are data-only, dev/stage only. |
 | **Backend** | Stateless; DTOs for all public API (no exposing Prisma models); validation at boundary; OpenAPI in sync; no business logic in controllers. TypeScript strict. |
 | **Frontend** | REST API only; no business logic duplication; typed clients from OpenAPI; UI/UX logic only. Styling: **Tailwind CSS** with **daisyUI**. |
 | **iOS app** | HealthKit read (workouts) on device; upload to backend via REST only; no business logic; idempotent API usage; background sync per Apple guidelines (see docs/research-apple-workout.md). |

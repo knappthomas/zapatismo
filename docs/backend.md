@@ -53,10 +53,13 @@ The API is available at `http://localhost:3000/api` and Swagger UI at `http://lo
 ```
 /
 ├── package.json                 # Root: npm workspaces, Prisma scripts
+├── scripts/
+│   └── run-test-migrations.ts   # Runner for test (data-only) migrations
 ├── prisma/
 │   ├── schema.prisma            # Database schema (single source of truth)
 │   ├── seed.ts                  # Admin user seeder
-│   └── migrations/              # Generated migration SQL files
+│   ├── migrations/              # Core schema migrations (Prisma)
+│   └── test-migrations/         # Data-only test migrations (dev/stage only)
 ├── apps/
 │   └── backend/
 │       ├── package.json         # NestJS dependencies and scripts
@@ -108,6 +111,36 @@ Run it with:
 
 ```bash
 npm run prisma:seed
+```
+
+### Test migrations (dev/stage only)
+
+Test migrations add **data-only** fixture data (test users, sample data) and run **only** in local or CI/stage. They are **never** run in production.
+
+- **Directory:** `prisma/test-migrations/`. Files are applied in lexicographic order (e.g. `00001_*.sql`, `00002_*.ts`).
+- **Formats:** `.sql` (raw SQL) or `.ts` (default export or `run(prisma)` function). No schema changes; data only.
+- **Environment gate:** The runner runs only when `NODE_ENV=development`, `APP_ENV=stage`, or `RUN_TEST_MIGRATIONS=true`. Otherwise it exits without applying anything.
+- **Idempotency:** Applied migrations are recorded in `_test_migrations`; already-applied files are skipped.
+
+Run test migrations (when in dev/stage) with:
+
+```bash
+npm run prisma:test-migrations
+```
+
+### Reset (remigrate from zero)
+
+To drop the database, reapply all core migrations, and run the seed:
+
+```bash
+npm run prisma:reset          # Interactive (prompts for confirmation)
+npm run prisma:reset:force    # Non-interactive (e.g. CI)
+```
+
+To reset and then apply test migrations (local dev only):
+
+```bash
+npm run prisma:reset:full
 ```
 
 ### Prisma Studio
