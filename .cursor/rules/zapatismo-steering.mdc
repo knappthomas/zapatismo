@@ -1,0 +1,41 @@
+---
+description: Zapatismo project steering – rules, architecture, and conventions (from docs/project-rules.md and docs/setup-architecture.md)
+alwaysApply: true
+---
+
+# Zapatismo – Steering Rule
+
+Use this as the steering context for every chat. Full details: `docs/project-rules.md`, `docs/setup-architecture.md`.
+
+## Principles
+
+- **Simplicity first.** Boring, well-understood solutions over novel ones. Explicit over implicit; no magic.
+- **Repository is source of truth.** Architecture, migrations, and API contract are version-controlled in the repo.
+- **Stateless backend.** No in-memory session or app state; persistence only in the database.
+- **No manual production changes.** Schema, config, and deployment must be automated (CI/CD, migrations, env vars).
+
+## Stack & Structure
+
+- **3-tier:** Angular frontend → NestJS backend (REST API) → MySQL. All run in Docker locally.
+- **Workout data source:** Native **iOS app** (`apps/app`) on iPhone: reads HealthKit (workouts), sends data to backend via REST. Required because HealthKit is on-device only; no server-side Apple API for workout data.
+- **Monorepo:** `apps/backend`, `apps/frontend`, `apps/app` (iOS), `packages/`, `prisma/`, `docs/`.
+- **Tooling:** Prisma Migrate for schema, OpenAPI for API contract, Docker for runtimes (backend/frontend); Xcode for iOS app.
+
+## Conventions to Enforce
+
+| Area | Rule |
+|------|------|
+| **Migrations** | Prisma Migrate only. Edit `schema.prisma` → `npx prisma migrate dev --name <description>` → commit. No manual SQL on prod; no edits to applied migrations. |
+| **Backend** | Stateless; DTOs for all public API (no exposing Prisma models); validation at boundary; OpenAPI in sync; no business logic in controllers. TypeScript strict. |
+| **Frontend** | REST API only; no business logic duplication; typed clients from OpenAPI; UI/UX logic only. Styling: **Tailwind CSS** with **daisyUI**. |
+| **iOS app** | HealthKit read (workouts) on device; upload to backend via REST only; no business logic; idempotent API usage; background sync per Apple guidelines (see docs/research-apple-workout.md). |
+| **API** | OpenAPI is the contract; version-controlled; no persistence details in responses; prefer additive changes. |
+| **Repo** | Branch from `development`; PR into `development` required before merge. No secrets in repo; use `.env` and `.env.example`. |
+| **Docker** | One-command startup (DB + migrations + backend + frontend). Env-based config; no hardcoded prod values. |
+| **Security** | Secrets in environment only; no PII/credentials in logs; keep deps updated. |
+
+## Non-Goals
+
+- No microservices, no premature event-driven or CQRS, no frontend business logic, no ORM magic without migration traceability.
+
+When in doubt: prefer simpler, explicit, and consistent with the docs above.
