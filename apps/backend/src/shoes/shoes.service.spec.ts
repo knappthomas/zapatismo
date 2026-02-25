@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateShoeDto } from './dto/create-shoe.dto';
@@ -16,6 +16,9 @@ describe('ShoesService (unit)', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+    },
+    workout: {
+      count: jest.fn(),
     },
   };
 
@@ -235,6 +238,35 @@ describe('ShoesService (unit)', () => {
         expect(e).toBeInstanceOf(NotFoundException);
       }
       expect(prisma.shoe.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws ConflictException when shoe is linked to workouts and does not delete', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue(shoeEntity);
+      mockPrisma.workout.count.mockResolvedValue(2);
+
+      try {
+        await service.remove(1, userId);
+        fail('expected ConflictException');
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConflictException);
+      }
+      expect(prisma.workout.count).toHaveBeenCalledWith({
+        where: { shoeId: 1 },
+      });
+      expect(prisma.shoe.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes shoe when no workouts reference it', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue(shoeEntity);
+      mockPrisma.workout.count.mockResolvedValue(0);
+      mockPrisma.shoe.delete.mockResolvedValue(shoeEntity);
+
+      await service.remove(1, userId);
+
+      expect(prisma.workout.count).toHaveBeenCalledWith({
+        where: { shoeId: 1 },
+      });
+      expect(prisma.shoe.delete).toHaveBeenCalledWith({ where: { id: 1 } });
     });
   });
 });

@@ -1,5 +1,7 @@
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
+import { WorkoutType } from '@prisma/client';
 import { PrismaModule } from '../src/prisma/prisma.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { ShoesService } from '../src/shoes/shoes.service';
@@ -91,5 +93,50 @@ describe('Shoes integration (DB)', () => {
     const listAfter = await shoesService.findAll(user.id);
     const gone = listAfter.find((s) => s.id === created.id);
     expect(gone).toBeUndefined();
+  });
+
+  it('rejects shoe delete with 409 when shoe is linked to workouts', async () => {
+    const user = await prisma.user.findUnique({
+      where: { email: THOMAS_EMAIL },
+    });
+    if (!user) {
+      throw new Error(
+        `Integration test requires user ${THOMAS_EMAIL}; run test-migrations first`,
+      );
+    }
+
+    const shoe = await prisma.shoe.findFirst({
+      where: { userId: user.id },
+    });
+    if (!shoe) {
+      throw new Error('Need at least one shoe for thomas from test-migrations');
+    }
+
+    const workout = await prisma.workout.create({
+      data: {
+        userId: user.id,
+        type: WorkoutType.RUNNING,
+        startTime: new Date('2025-02-25T08:00:00.000Z'),
+        endTime: new Date('2025-02-25T09:00:00.000Z'),
+        steps: 1000,
+        distanceKm: 2,
+        location: 'Shoe delete 409 test',
+        shoeId: shoe.id,
+      },
+    });
+
+    try {
+      await shoesService.remove(shoe.id, user.id);
+      fail('expected ConflictException');
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConflictException);
+    }
+
+    const shoeStillExists = await prisma.shoe.findUnique({
+      where: { id: shoe.id },
+    });
+    expect(shoeStillExists).not.toBeNull();
+
+    await prisma.workout.delete({ where: { id: workout.id } });
   });
 });

@@ -20,6 +20,9 @@ import { AuthService } from '../core/auth/auth.service';
             <li>
               <a routerLink="/shoes" routerLinkActive="active">Shoes</a>
             </li>
+            <li>
+              <a routerLink="/workouts" routerLinkActive="active">Workouts</a>
+            </li>
           }
           @if (auth.hasRole('ADMIN')) {
             <li>

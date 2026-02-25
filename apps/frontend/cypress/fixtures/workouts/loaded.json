@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "type": "RUNNING",
+    "startTime": "2025-02-20T08:00:00.000Z",
+    "endTime": "2025-02-20T09:15:00.000Z",
+    "steps": 12000,
+    "distanceKm": 12.5,
+    "location": "Villach Park",
+    "shoeId": 1,
+    "shoe": { "id": 1, "brandName": "Nike", "shoeName": "Pegasus 40" },
+    "createdAt": "2025-02-20T10:00:00.000Z",
+    "updatedAt": "2025-02-20T10:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "userId": 1,
+    "type": "WALKING",
+    "startTime": "2025-02-22T14:00:00.000Z",
+    "endTime": "2025-02-22T15:30:00.000Z",
+    "steps": 8000,
+    "distanceKm": 6.2,
+    "location": "Central Park",
+    "shoeId": null,
+    "shoe": null,
+    "createdAt": "2025-02-22T16:00:00.000Z",
+    "updatedAt": "2025-02-22T16:00:00.000Z"
+  }
+]

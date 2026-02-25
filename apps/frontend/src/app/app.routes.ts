@@ -42,6 +42,24 @@ export const routes: Routes = [
           import('./features/shoes/shoe-form.component').then((m) => m.ShoeFormComponent),
         canActivate: [userGuard],
       },
+      {
+        path: 'workouts',
+        loadComponent: () =>
+          import('./features/workouts/workouts-overview.component').then((m) => m.WorkoutsOverviewComponent),
+        canActivate: [userGuard],
+      },
+      {
+        path: 'workouts/new',
+        loadComponent: () =>
+          import('./features/workouts/workout-form.component').then((m) => m.WorkoutFormComponent),
+        canActivate: [userGuard],
+      },
+      {
+        path: 'workouts/:id/edit',
+        loadComponent: () =>
+          import('./features/workouts/workout-form.component').then((m) => m.WorkoutFormComponent),
+        canActivate: [userGuard],
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

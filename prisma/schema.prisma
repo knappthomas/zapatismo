@@ -20,8 +20,14 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
   shoes        Shoe[]
+  workouts     Workout[]
 
   @@map("users")
+}
+
+enum WorkoutType {
+  RUNNING
+  WALKING
 }
 
 model Shoe {
@@ -36,10 +42,32 @@ model Shoe {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workouts Workout[]
 
   @@index([userId])
   @@map("shoes")
+}
+
+model Workout {
+  id         Int        @id @default(autoincrement())
+  userId     Int        @map("user_id")
+  type       WorkoutType
+  startTime  DateTime   @map("start_time")
+  endTime    DateTime   @map("end_time")
+  steps      Int
+  distanceKm Float      @map("distance_km")
+  location   String     @db.VarChar(50)
+  shoeId     Int?       @map("shoe_id")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shoe Shoe? @relation(fields: [shoeId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([shoeId])
+  @@map("workouts")
 }
 
 // Tracks applied test migrations (data-only, dev/stage). Do not use for app logic.

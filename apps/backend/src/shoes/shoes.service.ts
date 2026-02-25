@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateShoeDto } from './dto/create-shoe.dto';
 import { ShoeResponseDto } from './dto/shoe-response.dto';
@@ -78,6 +82,14 @@ export class ShoesService {
     });
     if (!existing) {
       throw new NotFoundException(`Shoe with id ${id} not found`);
+    }
+    const workoutsCount = await this.prisma.workout.count({
+      where: { shoeId: id },
+    });
+    if (workoutsCount > 0) {
+      throw new ConflictException(
+        `Shoe is linked to ${workoutsCount} workout(s) and cannot be deleted. Remove or change the shoe assignment on those workouts first.`,
+      );
     }
     await this.prisma.shoe.delete({ where: { id } });
   }

@@ -12,7 +12,6 @@ import {
 import {
   ApiBearerAuth,
   ApiBadRequestResponse,
-  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -22,80 +21,77 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
+import { RequestUser } from '../auth/decorators/request-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { RequestUser } from '../auth/decorators/request-user.decorator';
-import { CreateShoeDto } from './dto/create-shoe.dto';
-import { ShoeResponseDto } from './dto/shoe-response.dto';
-import { UpdateShoeDto } from './dto/update-shoe.dto';
-import { ShoesService } from './shoes.service';
+import { CreateWorkoutDto } from './dto/create-workout.dto';
+import { UpdateWorkoutDto } from './dto/update-workout.dto';
+import { WorkoutResponseDto } from './dto/workout-response.dto';
+import { WorkoutsService } from './workouts.service';
 
-@ApiTags('shoes')
+@ApiTags('workouts')
 @ApiBearerAuth()
-@Controller('shoes')
+@Controller('workouts')
 @Roles(Role.USER)
 @UseGuards(RolesGuard)
-export class ShoesController {
-  constructor(private readonly shoesService: ShoesService) {}
+export class WorkoutsController {
+  constructor(private readonly workoutsService: WorkoutsService) {}
 
   @Get()
-  @ApiOkResponse({ type: [ShoeResponseDto] })
+  @ApiOkResponse({ type: [WorkoutResponseDto] })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiForbiddenResponse({ description: 'User role required (admin has no access)' })
-  async findAll(@RequestUser('id') userId: number): Promise<ShoeResponseDto[]> {
-    return this.shoesService.findAll(userId);
+  async findAll(@RequestUser('id') userId: number): Promise<WorkoutResponseDto[]> {
+    return this.workoutsService.findAll(userId);
   }
 
   @Post()
-  @ApiCreatedResponse({ type: ShoeResponseDto })
-  @ApiBadRequestResponse({ description: 'Validation error' })
+  @ApiCreatedResponse({ type: WorkoutResponseDto })
+  @ApiBadRequestResponse({ description: 'Validation error or invalid shoe reference' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiForbiddenResponse({ description: 'User role required' })
   async create(
     @RequestUser('id') userId: number,
-    @Body() dto: CreateShoeDto,
-  ): Promise<ShoeResponseDto> {
-    return this.shoesService.create(userId, dto);
+    @Body() dto: CreateWorkoutDto,
+  ): Promise<WorkoutResponseDto> {
+    return this.workoutsService.create(userId, dto);
   }
 
   @Get(':id')
-  @ApiOkResponse({ type: ShoeResponseDto })
-  @ApiNotFoundResponse({ description: 'Shoe not found' })
+  @ApiOkResponse({ type: WorkoutResponseDto })
+  @ApiNotFoundResponse({ description: 'Workout not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiForbiddenResponse({ description: 'User role required' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @RequestUser('id') userId: number,
-  ): Promise<ShoeResponseDto> {
-    return this.shoesService.findOne(id, userId);
+  ): Promise<WorkoutResponseDto> {
+    return this.workoutsService.findOne(id, userId);
   }
 
   @Patch(':id')
-  @ApiOkResponse({ type: ShoeResponseDto })
-  @ApiBadRequestResponse({ description: 'Validation error' })
-  @ApiNotFoundResponse({ description: 'Shoe not found' })
+  @ApiOkResponse({ type: WorkoutResponseDto })
+  @ApiBadRequestResponse({ description: 'Validation error or invalid shoe reference' })
+  @ApiNotFoundResponse({ description: 'Workout not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiForbiddenResponse({ description: 'User role required' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @RequestUser('id') userId: number,
-    @Body() dto: UpdateShoeDto,
-  ): Promise<ShoeResponseDto> {
-    return this.shoesService.update(id, userId, dto);
+    @Body() dto: UpdateWorkoutDto,
+  ): Promise<WorkoutResponseDto> {
+    return this.workoutsService.update(id, userId, dto);
   }
 
   @Delete(':id')
-  @ApiNoContentResponse({ description: 'Shoe deleted' })
-  @ApiNotFoundResponse({ description: 'Shoe not found' })
-  @ApiConflictResponse({
-    description: 'Shoe is linked to one or more workouts and cannot be deleted',
-  })
+  @ApiNoContentResponse({ description: 'Workout deleted' })
+  @ApiNotFoundResponse({ description: 'Workout not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiForbiddenResponse({ description: 'User role required' })
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @RequestUser('id') userId: number,
   ): Promise<void> {
-    return this.shoesService.remove(id, userId);
+    return this.workoutsService.remove(id, userId);
   }
 }
