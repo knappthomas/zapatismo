@@ -15,6 +15,7 @@ This document describes the NestJS backend (`apps/backend/`) and Prisma setup (`
 7. [Adding a New Feature Module](#7-adding-a-new-feature-module)
 8. [Environment Variables](#8-environment-variables)
 9. [OpenAPI / Swagger](#9-openapi--swagger)
+10. [Running tests](#10-running-tests)
 
 ---
 
@@ -383,3 +384,25 @@ When adding or modifying endpoints:
 4. Verify the spec at `/api/docs` after changes.
 
 The OpenAPI spec should be kept in sync with the codebase at all times and regenerated/committed when the API changes.
+
+---
+
+## 10. Running tests
+
+Backend tests are run with **Jest** from `apps/backend/`.
+
+### Unit tests
+
+- **Command:** From repo root: `npm run test --workspace=@zapatismo/backend`. From `apps/backend`: `npm run test`.
+- **Scope:** All `*.spec.ts` files (excluding `*.integration-spec.ts`). No database or other services required.
+- **Use:** Fast feedback during development; also run in CI.
+
+### Integration tests
+
+- **Command:** From repo root: `npm run test:integration --workspace=@zapatismo/backend`. From `apps/backend`: `npm run test:integration`.
+- **Scope:** All `*.integration-spec.ts` files. Tests use the real database via `PrismaService`.
+- **Preconditions:** **MySQL must be running** and reachable via `DATABASE_URL` (e.g. start MySQL with `docker compose up -d` in `misc/mysql` from repo root). Use `.env` or `.env.development` (or set `DATABASE_URL` in the environment). To avoid touching dev data, use a dedicated test database (e.g. set `DATABASE_URL` to a `zapatismo_test` database).
+
+### CI
+
+A GitHub Actions workflow (`.github/workflows/backend-tests.yml`) runs on **every push to every branch**. It runs unit tests then integration tests; integration tests use a MySQL service container and apply migrations before running. No secrets are required in the workflow; test DB credentials are non-sensitive defaults.

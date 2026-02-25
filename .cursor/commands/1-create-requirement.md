@@ -13,6 +13,10 @@ IMPORTANT (Non-negotiables):
 - No assumptions. If something is unclear: mark it as "UNRESOLVED" + formulate a precise clarification question.
 - Use precise language: MUST/SHOULD/MAY.
 - Focus: What exactly must be implemented + acceptance criteria + scope/out-of-scope + dependencies + risks.
+- **Backend testing:** For any ticket that affects the backend (`apps/backend`), the requirement sheet MUST include:
+  - **Unit tests:** A functional requirement that new or changed backend behaviour is covered by unit tests (isolated, no real DB; e.g. services with mocked dependencies). MUST unless the ticket is purely non-backend.
+  - **Integration tests:** A functional requirement that behaviour that touches the database or external boundaries is covered by integration tests (real DB or test double as defined in the repo). MUST when the feature involves persistence, external APIs, or HTTP boundaries.
+  - Acceptance criteria that can be verified by running these tests (e.g. “Given … when unit/integration tests run, then they pass”).
 
 INPUT (ask me when executing):
 - Ticket ID (= [ticket-id])
@@ -86,6 +90,8 @@ Table:
 |---|---|---|---|---|
 | FR-1 | ... |
 
+**Backend testing (if backend is in scope):** Include at least one FR for backend unit tests (MUST). Include an FR for backend integration tests (MUST) when the feature uses the database, external services, or HTTP layer. Example: “New/changed backend logic is covered by unit tests”; “Behaviour that uses the DB is covered by at least one integration test.”
+
 ## 5. Data & Interfaces (conceptual)
 - Data objects (terms + meaning, no final fields):
 - Inputs / Outputs (high-level):
@@ -121,6 +127,8 @@ Table:
 List (prefer Given/When/Then):
 - AC-1: Given ... When ... Then ...
 - AC-2: ...
+
+**Backend testing (if backend is in scope):** Include at least one AC that is verified by running backend unit tests (e.g. “Given the repo and deps, when the documented unit-test command is run, then all unit tests pass”). When integration tests apply, include an AC verified by running backend integration tests (e.g. “Given DB available, when the integration-test command is run, then all integration tests pass”).
 
 ## 9. Dependencies, Risks, Impact
 - Dependencies (teams / services / configs):

@@ -57,7 +57,10 @@ PLANNING RULES:
 - Include data model changes only at the level of Prisma models + migration steps (no full SQL).
 - Include validation placement rules: what must be validated in Angular vs backend.
 - Include error handling strategy (HTTP codes, error shapes) consistent with existing patterns.
-- Include test plan: unit/integration/e2e as applicable to the repo setup.
+- **Testing plan:** For every ticket that touches the backend, the plan MUST include a concrete **Testing Plan** (section 8) that states:
+  - **Unit tests:** Which behaviour is covered by unit tests (e.g. which services/methods, which edge cases or error paths). Unit tests run without a real DB; use mocks for Prisma/external deps. If no unit tests are needed (e.g. ticket is infra-only), say so explicitly.
+  - **Integration tests:** Which behaviour is covered by integration tests (e.g. which endpoints or flows hit the real DB or HTTP layer). Specify what is under test (e.g. “login + one protected endpoint”) and any preconditions (DB, env). If no integration tests are needed, say so explicitly.
+  - Map each to work packages (e.g. “WP-N: add unit tests for X”, “WP-M: add integration test for Y”) so the implementer knows exactly what to write.
 - Include acceptance criteria traceability: each AC maps to verification steps/tests.
 
 OUTPUT FORMAT:
@@ -156,9 +159,9 @@ Rules:
 - Background behavior considerations:
 
 ## 8. Testing Plan
-- Backend tests:
-  - Unit:
-  - Integration (DB):
+- **Backend tests (required when backend is in scope):**
+  - **Unit:** List what is covered: e.g. “Service X: create/findOne with mocked Prisma; error paths (not found, conflict).” State which modules/files get `*.spec.ts` tests. If none: “No unit tests (reason: …).”
+  - **Integration (DB):** List what is covered: e.g. “One test: app bootstrap + Prisma connect + query user count” or “Login + GET /api/users with real DB.” State preconditions (MySQL, DATABASE_URL). If none: “No integration tests (reason: …).”
 - Frontend tests:
   - Unit:
   - E2E (Cypress) (if applicable in repo):

@@ -9,6 +9,7 @@ Goal: Step 3 (Backend Implementation) — implement ONLY the backend part for ex
 - Document everything in a single ticket log file
 
 NON-NEGOTIABLES:
+- **Backend testing:** Implement the unit and integration tests specified in the plan. Every new or changed backend behaviour that the plan marks for unit tests MUST have corresponding unit tests (e.g. `*.spec.ts` with mocks). Every behaviour the plan marks for integration tests MUST have at least one integration test (e.g. `*.integration-spec.ts` using real DB or HTTP). Tests must be **useful**: they must cover the planned behaviour, key success paths, and important error/edge cases; no empty or trivial tests that only assert “defined”.
 - Strictly follow the ticket plan. Do EXACTLY what is planned — no extra refactors, no “nice-to-haves”.
 - No frontend work. No Angular changes. No iOS changes.
 - Backend must remain stateless REST.
@@ -50,7 +51,7 @@ TASKS (execute in this order):
    - Find existing validation patterns (class-validator pipes? zod? custom?).
    - Find existing error/exception -> HTTP mapping patterns (filters, interceptors, standard error body).
    - Find existing Prisma usage patterns (where PrismaClient is instantiated, repository layer conventions).
-   - Find test patterns (unit/integration, test DB setup, docker-compose usage).
+   - Find test patterns (unit/integration, test DB setup, docker-compose usage): how `*.spec.ts` vs `*.integration-spec.ts` are used, how Prisma/DB is mocked in unit tests, how integration tests bootstrap the app or hit the DB.
    Document the concrete reference files you chose as the blueprint in the log.
 
 2) Prisma / Database implementation (only if the plan requires schema changes)
@@ -78,9 +79,10 @@ TASKS (execute in this order):
    - Document the exact files changed and generation commands.
 
 5) Testing
-   - Implement tests as specified in the plan (backend unit and/or integration with DB).
-   - Ensure tests pass locally.
-   - Document test commands and what the tests cover (mapped to ACs where possible).
+   - Implement **unit tests** as specified in the plan: for each service/module the plan assigns to unit tests, add or update `*.spec.ts` tests with mocked dependencies (e.g. PrismaService); cover main success paths and planned error/edge cases. Tests must be useful (assert real behaviour), not placeholders.
+   - Implement **integration tests** as specified in the plan: for each behaviour the plan assigns to integration tests, add or update `*.integration-spec.ts` tests (e.g. Nest TestingModule + real DB, or supertest against the app); cover the planned flows. Respect plan preconditions (e.g. DATABASE_URL, MySQL).
+   - Ensure all backend test commands (e.g. `npm run test`, `npm run test:integration`) pass locally.
+   - Document test commands and what each test file covers, mapped to plan WPs and ACs where possible.
 
 6) Sanity checks
    - Run lint/typecheck/test commands relevant to the backend.
@@ -188,4 +190,4 @@ QUALITY GATE (must satisfy before finishing):
 - Prisma migration(s) created and reproducible.
 - Endpoints match the plan exactly (paths, methods, DTO shapes).
 - Error handling follows existing repo patterns (references included).
-- Tests pass.
+- **Unit and integration tests** from the plan are implemented and useful (cover planned behaviour and key paths/errors); all backend test commands pass.
