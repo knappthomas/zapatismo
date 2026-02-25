@@ -47,9 +47,9 @@ describe('Shoes integration (DB)', () => {
     const list = await shoesService.findAll(user.id);
     expect(Array.isArray(list)).toBe(true);
     expect(list.length).toBeGreaterThanOrEqual(1);
-    const fromFixture = list.find((s) => s.shoeName === 'Thomas Running Shoe');
+    const fromFixture = list.find((s) => s.shoeName === 'Gel-Kayano 32');
     expect(fromFixture).toBeDefined();
-    expect(fromFixture?.brandName).toBe('Test Brand');
+    expect(fromFixture?.brandName).toBe('Asics');
     expect(fromFixture?.kilometerTarget).toBe(800);
     expect(fromFixture?.userId).toBe(user.id);
   });
