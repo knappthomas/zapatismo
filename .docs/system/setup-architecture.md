@@ -170,19 +170,19 @@ This keeps the UI minimal and consistent without custom design system work in ea
 
 **Native iOS app (Swift), in `apps/app-ios/`**
 
-Apple does not provide a server-side or REST-based HealthKit API. Workout data lives only on the user’s iPhone (and Apple Watch); access requires an app running on the device with HealthKit entitlements and user authorization.
+Apple does not provide a server-side or REST-based HealthKit API. Workout data lives only on the user's iPhone (and Apple Watch); access requires an app running on the device with HealthKit entitlements and user authorization.
 
 **Purpose:**
 
 - Read running/walking workouts from HealthKit on the iPhone
 - Sync data to the Zapatismo backend via the same REST API (idempotent endpoints)
-- Support background sync where possible (HealthKit Background Delivery, BGTaskScheduler, Background URLSession), within Apple’s constraints
+- Support background sync where possible (HealthKit Background Delivery, BGTaskScheduler, Background URLSession), within Apple's constraints
 
 **Principles:**
 
 - **REST client only:** The app does not implement business logic; it reads HealthKit and uploads to backend. Normalization and persistence are backend responsibilities.
 - **API contract:** Use the same OpenAPI-defined endpoints as the web frontend (or a dedicated import/sync API documented in OpenAPI).
-- **Idempotent usage:** Backend must accept re-syncs and duplicate uploads (e.g. anchored incremental sync); see `docs/research-apple-workout.md` for patterns.
+- **Idempotent usage:** Backend must accept re-syncs and duplicate uploads (e.g. anchored incremental sync); see [research-apple-workout.md](./research-apple-workout.md) for patterns.
 
 **Responsibilities:**
 
@@ -197,7 +197,7 @@ Apple does not provide a server-side or REST-based HealthKit API. Workout data l
 - Xcode; build for iOS (simulator or device)
 - Not run in Docker; requires Mac and iOS device or simulator for development and testing
 
-Detailed design constraints, background behaviour, and limitations are documented in `docs/research-apple-workout.md`.
+Detailed design constraints, background behaviour, and limitations are documented in [research-apple-workout.md](./research-apple-workout.md).
 
 ---
 
@@ -218,7 +218,7 @@ The **iOS app** is built and run via Xcode (Mac only); it is not containerized.
 
 - Identical local and production behavior for backend and frontend
 - One-command startup for DB + backend + frontend
-- No “works on my machine” situations for the containerized stack
+- No "works on my machine" situations for the containerized stack
 
 ---
 
@@ -289,9 +289,10 @@ The project uses a **monorepo**.
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
-└── docs/
-    ├── setup-architecture.md
-    └── research-apple-workout.md   # HealthKit / iOS sync design
+└── .docs/
+    └── system/
+        ├── setup-architecture.md
+        └── research-apple-workout.md   # HealthKit / iOS sync design
 ```
 
 The repository is the **single source of truth**, including:
@@ -381,7 +382,7 @@ To maintain clarity and avoid architectural drift:
 - **No** premature event-driven architecture
 - **No** complex CQRS setup
 - **No** frontend-heavy business logic
-- **No** ORM “auto-magic” without migration traceability
+- **No** ORM "auto-magic" without migration traceability
 
 The system is deliberately **simple**.
 

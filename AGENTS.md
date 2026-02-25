@@ -4,7 +4,7 @@
 
 ### Architecture overview
 
-3-tier monorepo: Angular frontend (`apps/frontend`, port 4200) → NestJS backend (`apps/backend`, port 3000) → MySQL 8.0 (Docker, port 3306). See `docs/setup-architecture.md` for full details.
+3-tier monorepo: Angular frontend (`apps/frontend`, port 4200) → NestJS backend (`apps/backend`, port 3000) → MySQL 8.0 (Docker, port 3306). See `.docs/system/setup-architecture.md` for full details.
 
 ### Running services
 

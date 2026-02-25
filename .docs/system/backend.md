@@ -72,7 +72,8 @@ The API is available at `http://localhost:3000/api` and Swagger UI at `http://lo
 │           ├── prisma/          # PrismaModule (global)
 │           ├── auth/            # AuthModule (JWT, guards, decorators)
 │           └── users/           # UsersModule (user CRUD)
-└── docs/
+└── .docs/
+    └── system/
 ```
 
 The root `package.json` uses npm workspaces (`"workspaces": ["apps/*"]`) so that shared dependencies (notably `@prisma/client`) are hoisted to root `node_modules/`. This means `prisma generate` at the root produces a client that both the seed script and the backend can resolve.
