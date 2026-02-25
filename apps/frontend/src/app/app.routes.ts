@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, adminGuard } from './core/auth/auth.guard';
+import { authGuard, adminGuard, userGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -23,6 +23,24 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/users/user-list.component').then((m) => m.UserListComponent),
         canActivate: [adminGuard],
+      },
+      {
+        path: 'shoes',
+        loadComponent: () =>
+          import('./features/shoes/shoes-overview.component').then((m) => m.ShoesOverviewComponent),
+        canActivate: [userGuard],
+      },
+      {
+        path: 'shoes/new',
+        loadComponent: () =>
+          import('./features/shoes/shoe-form.component').then((m) => m.ShoeFormComponent),
+        canActivate: [userGuard],
+      },
+      {
+        path: 'shoes/:id/edit',
+        loadComponent: () =>
+          import('./features/shoes/shoe-form.component').then((m) => m.ShoeFormComponent),
+        canActivate: [userGuard],
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],

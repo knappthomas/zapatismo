@@ -19,8 +19,27 @@ model User {
   role         Role     @default(USER)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+  shoes        Shoe[]
 
   @@map("users")
+}
+
+model Shoe {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  photoUrl        String   @map("photo_url") @db.VarChar(2048)
+  brandName       String   @map("brand_name") @db.VarChar(75)
+  shoeName        String   @map("shoe_name") @db.VarChar(75)
+  buyingDate      DateTime @map("buying_date") @db.Date
+  buyingLocation  String?  @map("buying_location") @db.VarChar(255)
+  kilometerTarget Int      @map("kilometer_target")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("shoes")
 }
 
 // Tracks applied test migrations (data-only, dev/stage). Do not use for app logic.

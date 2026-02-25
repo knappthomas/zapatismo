@@ -15,3 +15,11 @@ export const adminGuard: CanActivateFn = () => {
   if (!auth.isAuthenticated()) return router.createUrlTree(['/login']);
   return auth.hasRole('ADMIN') ? true : router.createUrlTree(['/dashboard']);
 };
+
+/** Allows only USER role; redirects ADMIN to /dashboard (shoes are for normal users only). */
+export const userGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isAuthenticated()) return router.createUrlTree(['/login']);
+  return auth.hasRole('USER') ? true : router.createUrlTree(['/dashboard']);
+};

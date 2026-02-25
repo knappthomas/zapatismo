@@ -47,6 +47,11 @@ jobs:
       - name: Apply migrations
         run: npx prisma migrate deploy
 
+      - name: Apply test migrations
+        run: npm run prisma:test-migrations
+        env:
+          RUN_TEST_MIGRATIONS: 'true'
+
       - name: Run unit tests
         run: npm run test --workspace=@zapatismo/backend
 
