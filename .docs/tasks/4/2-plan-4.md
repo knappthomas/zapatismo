@@ -11,7 +11,7 @@
   - One GitHub Actions workflow running backend tests on every push to every branch.
   - Documentation in root `README.md`, `.docs/system/backend.md`, and `apps/backend/README.md` for running tests and integration-test preconditions.
 - **Out-of-Scope summary (bullets):**
-  - Frontend or iOS testing; E2E/system tests spanning frontend + backend + DB.
+  - Frontend or Strava/sync testing; E2E/system tests spanning frontend + backend + DB.
   - Deployment steps in the same workflow; coverage gates or minimum coverage %.
   - Migration execution in CI only as required to run integration tests (i.e. apply migrations to test DB).
 - **Key assumptions (only if explicitly stated in requirements):**
@@ -30,7 +30,7 @@
 | Database (MySQL via Prisma) | Used by integration tests only; test DB in CI via service container | No schema changes; migrations applied in CI to create test DB schema. |
 | OpenAPI contract | None | No API or DTO changes. |
 | Docker/Compose | None for this ticket | CI uses GitHub-hosted runner and MySQL service container. |
-| iOS (apps/app-ios) | None | Out of scope. |
+| Strava integration | None | Out of scope. |
 | Repository (`.github/workflows/`) | One workflow runs backend test scripts on every push | New workflow file; no secrets in repo. |
 
 ---
@@ -145,9 +145,9 @@ Rules: Prisma Migrate only; no manual SQL. Migrations are applied in CI only to 
 
 ---
 
-## 7. iOS App Plan (ONLY if required)
+## 7. Strava / Workout Sync (ONLY if required)
 
-- Not required. No changes to iOS or HealthKit.
+- Not required. No changes to Strava integration.
 
 ---
 

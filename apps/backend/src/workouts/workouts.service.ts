@@ -104,6 +104,50 @@ export class WorkoutsService {
     await this.prisma.workout.delete({ where: { id } });
   }
 
+  /**
+   * Idempotent create by external ID (e.g. Strava activity ID). Used by Strava sync only.
+   * If a workout with this userId and externalId already exists, returns { created: false }.
+   */
+  async createByExternalId(
+    userId: number,
+    data: {
+      externalId: string;
+      type: WorkoutType;
+      startTime: Date;
+      endTime: Date;
+      steps: number;
+      distanceKm: number;
+      location: string;
+      shoeId?: number | null;
+    },
+  ): Promise<{ created: boolean; workout?: WorkoutResponseDto }> {
+    const existing = await this.prisma.workout.findFirst({
+      where: { userId, externalId: data.externalId },
+      include: { shoe: { select: { id: true, brandName: true, shoeName: true } } },
+    });
+    if (existing) {
+      return { created: false };
+    }
+    if (data.shoeId != null) {
+      await this.ensureShoeBelongsToUser(data.shoeId, userId);
+    }
+    const workout = await this.prisma.workout.create({
+      data: {
+        userId,
+        externalId: data.externalId,
+        type: data.type,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        steps: data.steps,
+        distanceKm: data.distanceKm,
+        location: data.location,
+        shoeId: data.shoeId ?? null,
+      },
+      include: { shoe: { select: { id: true, brandName: true, shoeName: true } } },
+    });
+    return { created: true, workout: this.toResponse(workout) };
+  }
+
   private validateEndAfterStart(startTime: string, endTime: string): void {
     const start = new Date(startTime).getTime();
     const end = new Date(endTime).getTime();
@@ -134,6 +178,7 @@ export class WorkoutsService {
     createdAt: Date;
     updatedAt: Date;
     shoe?: { id: number; brandName: string; shoeName: string } | null;
+    externalId?: string | null;
   }): WorkoutResponseDto {
     return {
       id: workout.id,

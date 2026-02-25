@@ -10,7 +10,7 @@
   - Database: Shoe model with per-user ownership; schema enforces max lengths and km target cap.
   - **Test data (obligatory):** Shoe test data via Prisma test-migrations, using the existing USER from `prisma/test-migrations/00002_thomas_user.ts` (thomas@zapatismo.local / thomas) as owner; new test-migration adds shoes for this user so integration and E2E tests can rely on it.
 - **Out-of-Scope summary (bullets):**
-  - Linking shoes to workouts; "distance done" per shoe; admin seeing/managing shoes; iOS app changes; photo upload (URL only); redesign of existing backoffice beyond new menu and routes.
+  - Linking shoes to workouts; "distance done" per shoe; admin seeing/managing shoes; Strava integration changes; photo upload (URL only); redesign of existing backoffice beyond new menu and routes.
 - **Key assumptions (only if explicitly stated in requirements):**
   - "Normal user" = role USER; admin (ADMIN) does not see Shoes menu and must not access shoe endpoints (403 or equivalent).
   - Buying date: required unless product decision says otherwise (requirement lists it in form; validation table says "optional or required per product decision" — implement as required; can be relaxed later).
@@ -27,7 +27,7 @@
 | Database (MySQL via Prisma) | Shoe table with user relation; column constraints for string length (75) and km target (e.g. max 100000). | Prisma Migrate only. |
 | OpenAPI contract | New DTOs and endpoints for shoes; spec regenerated from NestJS/Swagger. | @ApiProperty on DTOs; @ApiTags, @ApiBearerAuth on controller. |
 | Docker/Compose | No change. | — |
-| iOS (apps/app-ios) | No change. | Out of scope. |
+| Strava integration | No change. | Out of scope. |
 
 ---
 
@@ -182,9 +182,9 @@ Rules: Prisma Migrate only; no manual SQL. Test-migrations are data-only (dev/st
 
 ---
 
-## 7. iOS App Plan (ONLY if required)
+## 7. Strava / Workout Sync (ONLY if required)
 
-Not applicable. No iOS changes in this ticket.
+Not applicable. No Strava integration changes in this ticket.
 
 ---
 

@@ -22,7 +22,7 @@
 - **Out-of-Scope (max 5 bullets):**
   - Linking shoes to workouts or training data; "how many kilometers were done with this shoe" (future ticket).
   - Admin seeing or managing shoes; cross-user shoe visibility (shoes are strictly per-user).
-  - iOS app changes; shoe management is backoffice (web) only in this ticket.
+  - Strava integration changes; shoe management is backoffice (web) only in this ticket.
   - Redesign of existing backoffice layout or auth flows beyond adding a menu item and shoes routes.
   - Photo upload or server-side image storage; photo is a URL only (no upload required).
 
@@ -42,7 +42,7 @@
   - "Backoffice" is the existing web frontend after login; "menu" is the main navigation (e.g. navbar) where "Shoes" is added and shown only to USER.
   - "Kilometer target" is a number in km (kilometers) for tracking when a shoe is retired; "how many kilometers were done with this shoe" is implemented in a future feature—for now the user only enters the target value in km.
 - **Non-Goals:**
-  - Workout–shoe association; "distance done" per shoe; admin seeing or managing shoes; iOS shoe management; implementation details (schema, DTOs) in this requirement.
+  - Workout–shoe association; "distance done" per shoe; admin seeing or managing shoes; Strava/sync shoe management; implementation details (schema, DTOs) in this requirement.
 
 ---
 

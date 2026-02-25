@@ -17,9 +17,9 @@ Use this as the steering context for every chat. Full details: `.docs/system/pro
 ## Stack & Structure
 
 - **3-tier:** Angular frontend → NestJS backend (REST API) → MySQL. All run in Docker locally.
-- **Workout data source:** Native **iOS app** (`apps/app`) on iPhone: reads HealthKit (workouts), sends data to backend via REST. Required because HealthKit is on-device only; no server-side Apple API for workout data.
-- **Monorepo:** `apps/backend`, `apps/frontend`, `apps/app` (iOS), `packages/`, `prisma/`, `.docs/system/`.
-- **Tooling:** Prisma Migrate for schema, OpenAPI for API contract, Docker for runtimes (backend/frontend); Xcode for iOS app.
+- **Workout data source:** **Strava API**. Workouts are synced from Strava via the backend (no native iOS app). See `.docs/system/research-strava-api.md`.
+- **Monorepo:** `apps/backend`, `apps/frontend`, `packages/`, `prisma/`, `.docs/system/`.
+- **Tooling:** Prisma Migrate for schema, OpenAPI for API contract, Docker for runtimes (backend/frontend).
 
 ## Conventions to Enforce
 
@@ -28,7 +28,7 @@ Use this as the steering context for every chat. Full details: `.docs/system/pro
 | **Migrations** | Prisma Migrate only. Edit `schema.prisma` → `npx prisma migrate dev --name <description>` → commit. No manual SQL on prod; no edits to applied migrations. Test migrations (`prisma/test-migrations/`) are data-only, dev/stage only. |
 | **Backend** | Stateless; DTOs for all public API (no exposing Prisma models); validation at boundary; OpenAPI in sync; no business logic in controllers. TypeScript strict. |
 | **Frontend** | REST API only; no business logic duplication; typed clients from OpenAPI; UI/UX logic only. Styling: **Tailwind CSS** with **daisyUI**. |
-| **iOS app** | HealthKit read (workouts) on device; upload to backend via REST only; no business logic; idempotent API usage; background sync per Apple guidelines (see .docs/system/research-apple-workout.md). |
+| **Workout sync** | Strava API integration in backend; OAuth and token storage server-side; idempotent import by external activity ID. See .docs/system/research-strava-api.md. |
 | **API** | OpenAPI is the contract; version-controlled; no persistence details in responses; prefer additive changes. |
 | **Repo** | Branch from `development`; PR into `development` required before merge. No secrets in repo; use `.env` and `.env.development`. |
 | **Docker** | One-command startup (DB + migrations + backend + frontend). Env-based config; no hardcoded prod values. |

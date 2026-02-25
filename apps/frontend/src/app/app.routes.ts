@@ -60,6 +60,12 @@ export const routes: Routes = [
           import('./features/workouts/workout-form.component').then((m) => m.WorkoutFormComponent),
         canActivate: [userGuard],
       },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+        canActivate: [userGuard],
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

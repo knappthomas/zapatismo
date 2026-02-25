@@ -12,11 +12,11 @@ IMPORTANT (Non-negotiables):
 - You MUST scan the codebase to decide WHAT must change WHERE (files/modules), consistent with the architecture.
 
 DOCUMENTATION (read for constraints and conventions):
-- **Architecture & stack:** `.docs/system/setup-architecture.md` — 3-tier, Prisma, OpenAPI, Docker, iOS role.
+- **Architecture & stack:** `.docs/system/setup-architecture.md` — 3-tier, Prisma, OpenAPI, Docker, Strava API as workout data source.
 - **Project rules:** `.docs/system/project-rules.md` — migrations, backend/frontend/API conventions, repo workflow.
 - **Backend (when planning API/DB):** `.docs/system/backend.md` — NestJS/Prisma layout, modules, REST, OpenAPI.
 - **Frontend (when planning UI):** `.docs/system/frontend.md` — Angular layout, routing, auth, styling (Tailwind + daisyUI).
-- **iOS / HealthKit (only if ticket affects iOS app or workout sync):** `.docs/system/research-apple-workout.md` — background sync, HealthKit constraints.
+- **Strava (only if ticket affects workout sync):** `.docs/system/research-strava-api.md` — Strava API integration, OAuth, idempotent import.
 - No speculation. If requirements are missing/unclear: mark as "UNRESOLVED" and propose concrete questions.
 - Be explicit about scope and sequencing.
 - Prefer minimal changes; no architectural drift.

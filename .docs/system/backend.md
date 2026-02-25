@@ -363,8 +363,13 @@ export class AppModule {}
 | `JWT_SECRET` | Secret key for signing JWTs | `dev-jwt-secret-change-in-production` |
 | `JWT_EXPIRATION` | Token lifetime | `1h` |
 | `PORT` | HTTP listen port | `3000` |
+| `STRAVA_CLIENT_ID` | Strava API application Client ID | (set in .env; from [Strava API](https://www.strava.com/settings/api)) |
+| `STRAVA_CLIENT_SECRET` | Strava API application Client Secret | (set in .env; never commit production value) |
+| `STRAVA_CALLBACK_URL` | Backend OAuth callback URL; must match Strava app settings | `http://localhost:3000/api/strava/callback` |
+| `FRONTEND_URL` | Frontend base URL for redirect after OAuth (e.g. Settings) | `http://localhost:4200` |
+| `STRAVA_WEBHOOK_VERIFY_TOKEN` | Token for Strava webhook subscription verification | (set in .env for production) |
 
-For local development, copy `.env.development` to `.env` in both the root and `apps/backend/`. The `.env` files are gitignored; `.env.development` files are committed as safe local defaults.
+For local development, copy `.env.development` to `.env` in both the root and `apps/backend/`. Fill in `STRAVA_CLIENT_ID` and `STRAVA_CLIENT_SECRET` for Strava sync; leave webhook token empty if not using webhooks locally. The `.env` files are gitignored; `.env.development` files are committed as safe local defaults.
 
 In production, all variables must be set via real environment variables. Never commit production secrets.
 

@@ -9,7 +9,7 @@
 
 ## 1. Scope Confirmation
 - In scope (backend/db only): ✅
-- Out of scope (frontend/iOS/etc): ✅
+- Out of scope (frontend/Strava/etc): ✅
 - Plan-following mode (no extras): ✅
 
 ## 2. Repo Patterns Used (References)

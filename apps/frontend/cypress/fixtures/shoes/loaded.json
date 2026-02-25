@@ -8,6 +8,9 @@
     "buyingDate": "2024-01-15",
     "buyingLocation": "Berlin",
     "kilometerTarget": 800,
+    "totalSteps": 12500,
+    "totalDistanceKm": 120.5,
+    "isDefault": false,
     "createdAt": "2024-01-15T10:00:00.000Z",
     "updatedAt": "2024-01-15T10:00:00.000Z"
   }

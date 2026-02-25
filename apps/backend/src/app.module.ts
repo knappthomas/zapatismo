@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ShoesModule } from './shoes/shoes.module';
 import { WorkoutsModule } from './workouts/workouts.module';
+import { StravaModule } from './strava/strava.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     UsersModule,
     ShoesModule,
     WorkoutsModule,
+    StravaModule,
   ],
   providers: [
     {

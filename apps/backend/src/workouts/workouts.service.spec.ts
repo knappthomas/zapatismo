@@ -284,6 +284,67 @@ describe('WorkoutsService (unit)', () => {
     });
   });
 
+  describe('createByExternalId', () => {
+    const externalData = {
+      externalId: 'strava-123',
+      type: WorkoutType.RUNNING,
+      startTime: new Date('2025-02-25T08:00:00.000Z'),
+      endTime: new Date('2025-02-25T09:00:00.000Z'),
+      steps: 0,
+      distanceKm: 5,
+      location: 'Strava',
+    };
+
+    it('creates workout when no existing by externalId and returns { created: true }', async () => {
+      mockPrisma.workout.findFirst.mockResolvedValue(null);
+      mockPrisma.workout.create.mockResolvedValue({
+        ...workoutEntity,
+        externalId: externalData.externalId,
+      });
+
+      const result = await service.createByExternalId(userId, externalData);
+
+      expect(result.created).toBe(true);
+      expect(result.workout).toBeDefined();
+      expect(result.workout?.id).toBe(1);
+      expect(prisma.workout.findFirst).toHaveBeenCalledWith({
+        where: { userId: 1, externalId: externalData.externalId },
+        include: { shoe: { select: { id: true, brandName: true, shoeName: true } } },
+      });
+      expect(prisma.workout.create).toHaveBeenCalledWith({
+        data: {
+          userId: 1,
+          externalId: externalData.externalId,
+          type: externalData.type,
+          startTime: externalData.startTime,
+          endTime: externalData.endTime,
+          steps: externalData.steps,
+          distanceKm: externalData.distanceKm,
+          location: externalData.location,
+          shoeId: null,
+        },
+        include: { shoe: { select: { id: true, brandName: true, shoeName: true } } },
+      });
+    });
+
+    it('returns { created: false } when workout with same externalId already exists', async () => {
+      mockPrisma.workout.findFirst.mockResolvedValue({
+        ...workoutEntity,
+        externalId: externalData.externalId,
+      });
+
+      const result = await service.createByExternalId(userId, externalData);
+
+      expect(result.created).toBe(false);
+      expect(result.workout).toBeUndefined();
+      expect(prisma.workout.findFirst).toHaveBeenCalledWith({
+        where: { userId: 1, externalId: externalData.externalId },
+        include: { shoe: { select: { id: true, brandName: true, shoeName: true } } },
+      });
+      expect(prisma.workout.create).not.toHaveBeenCalled();
+    });
+  });
+
   describe('remove', () => {
     it('deletes workout when found and owned by user', async () => {
       mockPrisma.workout.findFirst.mockResolvedValue(workoutEntity);

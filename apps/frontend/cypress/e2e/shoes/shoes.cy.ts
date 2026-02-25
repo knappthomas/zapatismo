@@ -64,6 +64,44 @@ describe('Shoes', () => {
         cy.contains('Pegasus 40').should('be.visible');
         cy.contains('Nike').should('be.visible');
       });
+
+      it('grid shows total steps and distance progress bar per shoe', () => {
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.visit('/shoes');
+        overviewPO.shoesGrid.should('be.visible');
+        overviewPO.shoeTotalSteps.first().should('contain', '12500');
+        overviewPO.shoeDistanceProgress.first().should('be.visible');
+      });
+
+      it('overview shows default badge when list has one default shoe', () => {
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded-with-default.json' });
+        cy.visit('/shoes');
+        overviewPO.defaultBadges.should('have.length', 1).and('contain', 'Default');
+      });
+
+      it('edit shoe set as default then overview shows default badge', () => {
+        cy.intercept('GET', '**/api/shoes/1', { fixture: 'shoes/shoe-1-no-default.json' });
+        cy.intercept('PATCH', '**/api/shoes/1', { statusCode: 200, fixture: 'shoes/shoe-1-with-default.json' });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded-with-default.json' });
+        cy.visit('/shoes/1/edit');
+        formPO.defaultCheckbox.should('be.visible').and('not.be.checked');
+        formPO.defaultCheckbox.check();
+        formPO.submitButton.click();
+        cy.url().should('include', '/shoes');
+        overviewPO.defaultBadges.should('have.length', 1).and('contain', 'Default');
+      });
+
+      it('edit shoe clear default then overview shows no default badge', () => {
+        cy.intercept('GET', '**/api/shoes/1', { fixture: 'shoes/shoe-1-with-default.json' });
+        cy.intercept('PATCH', '**/api/shoes/1', { statusCode: 200, fixture: 'shoes/shoe-1-no-default.json' });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.visit('/shoes/1/edit');
+        formPO.defaultCheckbox.should('be.visible').and('be.checked');
+        formPO.defaultCheckbox.uncheck();
+        formPO.submitButton.click();
+        cy.url().should('include', '/shoes');
+        overviewPO.defaultBadges.should('have.length', 0);
+      });
     });
 
     describe('Error Handling', () => {

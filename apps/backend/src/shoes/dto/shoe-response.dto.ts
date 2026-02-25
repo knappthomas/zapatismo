@@ -25,6 +25,18 @@ export class ShoeResponseDto {
   @ApiProperty()
   kilometerTarget!: number;
 
+  /** Total steps from all workouts linked to this shoe. */
+  @ApiProperty()
+  totalSteps!: number;
+
+  /** Total distance (km) from all workouts linked to this shoe. */
+  @ApiProperty()
+  totalDistanceKm!: number;
+
+  /** Whether this shoe is the user's default for Strava sync (at most one per user). */
+  @ApiProperty()
+  isDefault!: boolean;
+
   @ApiProperty()
   createdAt!: Date;
 

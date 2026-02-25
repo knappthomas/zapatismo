@@ -5,7 +5,7 @@ Goal: Step 1 of the binding process: "Requirement / Specification" for exactly O
 
 DOCUMENTATION (read for context where relevant):
 - **Project rules & principles:** `.docs/system/project-rules.md` — simplicity, stateless backend, repo as source of truth, scope conventions.
-- **Architecture context:** `.docs/system/setup-architecture.md` — 3-tier layout, modules (frontend/backend/iOS), non-goals.
+- **Architecture context:** `.docs/system/setup-architecture.md` — 3-tier layout, modules (frontend/backend), workout data via Strava API, non-goals.
 
 IMPORTANT (Non-negotiables):
 - The result is a clear, testable working document (Requirement Sheet / Specification) as the foundation for the next step (implementation plan).

@@ -2,6 +2,8 @@
 
 Zapatismo is a web-based tool for structured management and analysis of sports-related shoe usage. It links training data with individual shoes to provide transparent and traceable insights into their actual use. The goal is to establish a clear decision-making foundation for when a shoe should continue to be used or replaced.
 
+Workout data is synced from the **Strava API** (backend integration); no native mobile app is required. See `.docs/system/setup-architecture.md` and `.docs/system/research-strava-api.md` for architecture and integration details.
+
 ## Backend tests
 
 - **Unit tests:** From repo root run `npm run test --workspace=@zapatismo/backend`, or from `apps/backend` run `npm run test`. No database required.

@@ -33,25 +33,25 @@ The system is intentionally **simple**, **explicit**, and **reproducible**.
 
 ## 2. High-Level Architecture
 
-Zapatismo follows a classic **3-tier architecture**, with an **iOS app** as the data source for workout data (HealthKit is on-device only; there is no server-side Apple API for workouts):
+Zapatismo follows a classic **3-tier architecture**, with the **Strava API** as the data source for workout data (workouts are synced from Strava instead of a native iOS app):
 
 ```
+┌─────────────────────────┐
+│   Angular Frontend      │
+│   (Web UI)              │
+└────────────┬────────────┘
+             │
+             ▼
 ┌─────────────────────────┐     ┌─────────────────────────┐
-│   Angular Frontend      │     │   iOS App (iPhone)      │
-│   (Web UI)              │     │   HealthKit → REST       │
-└────────────┬────────────┘     └────────────┬────────────┘
-             │                               │
-             └───────────────┬───────────────┘
-                             ▼
-              ┌─────────────────────────┐
-              │ NestJS Backend          │
-              │ (Stateless REST API)    │
-              └────────────┬────────────┘
-                           │
-                           ▼
-              ┌─────────────────────────┐
-              │   MySQL Database        │
-              └─────────────────────────┘
+│ NestJS Backend           │────▶│   Strava API            │
+│ (REST API; syncs        │     │   (workout data source) │
+│  workouts from Strava)  │     └─────────────────────────┘
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│   MySQL Database        │
+└─────────────────────────┘
 ```
 
 **Supporting tooling:**
@@ -61,9 +61,8 @@ Zapatismo follows a classic **3-tier architecture**, with an **iOS app** as the 
 | **Prisma Migrate** | Schema evolution and versioned migrations |
 | **OpenAPI**        | API contract definition and documentation |
 | **Docker**         | Local (and production) containerization   |
-| **Xcode**          | Build and run the iOS app (not containerized) |
 
-Backend, frontend, and database run in Docker for local development. The iOS app is built and run on a Mac with Xcode (simulator or device).
+Backend, frontend, and database run in Docker for local development. Workout data is obtained via the Strava API (OAuth and API credentials configured in the backend environment).
 
 ---
 
@@ -132,7 +131,7 @@ Backend, frontend, and database run in Docker for local development. The iOS app
 The backend is responsible for:
 
 - CRUD operations for domain entities
-- Importing and normalizing Apple Workout data
+- Importing and normalizing workout data from the Strava API
 - Computing derived metrics (e.g., mileage per shoe)
 - Providing OpenAPI-documented REST endpoints
 - Input validation and error handling
@@ -166,38 +165,31 @@ This keeps the UI minimal and consistent without custom design system work in ea
 
 ---
 
-### 3.5 iOS App (Workout Data Source)
+### 3.5 Strava API (Workout Data Source)
 
-**Native iOS app (Swift), in `apps/app-ios/`**
+**Workout data is synced via the Strava API.**
 
-Apple does not provide a server-side or REST-based HealthKit API. Workout data lives only on the user's iPhone (and Apple Watch); access requires an app running on the device with HealthKit entitlements and user authorization.
+The backend (or a dedicated sync process) uses the Strava API to fetch running and walking activities. Users connect their Strava account (e.g. OAuth); the backend then imports and normalizes activities into the local database.
 
 **Purpose:**
 
-- Read running/walking workouts from HealthKit on the iPhone
-- Sync data to the Zapatismo backend via the same REST API (idempotent endpoints)
-- Support background sync where possible (HealthKit Background Delivery, BGTaskScheduler, Background URLSession), within Apple's constraints
+- Obtain workout data (running/walking activities) from Strava instead of a native iOS app
+- Keep a single, server-side integration point for workout data
+- Support idempotent import (e.g. by Strava activity ID) so re-syncs do not create duplicates
 
 **Principles:**
 
-- **REST client only:** The app does not implement business logic; it reads HealthKit and uploads to backend. Normalization and persistence are backend responsibilities.
-- **API contract:** Use the same OpenAPI-defined endpoints as the web frontend (or a dedicated import/sync API documented in OpenAPI).
-- **Idempotent usage:** Backend must accept re-syncs and duplicate uploads (e.g. anchored incremental sync); see [research-apple-workout.md](./research-apple-workout.md) for patterns.
+- **Backend-only integration:** All Strava API calls and normalization happen in the backend. The frontend does not talk to Strava directly.
+- **API contract:** Workout import/sync endpoints are documented in OpenAPI; any client (e.g. future admin UI for triggering sync) uses the same contract.
+- **Idempotent usage:** Import logic must handle re-syncs and duplicate fetches (e.g. by external ID) without creating duplicate workouts.
 
 **Responsibilities:**
 
-- Request HealthKit read authorization for workout types
-- Query workouts (e.g. `HKWorkoutType`, filtered for running/walking) via HealthKit APIs
-- Incremental sync where supported (e.g. `HKAnchoredObjectQuery`, Background Delivery)
-- Upload payloads to backend over HTTPS (e.g. Background URLSession for reliability)
-- Optional: minimal UI for authorization and sync status
+- OAuth (or token-based) connection to Strava for authenticated users
+- Fetch activities from Strava API (running/walking), map to internal workout model
+- Store credentials or tokens securely (environment or per-user tokens); never expose Strava secrets to the frontend
 
-**Tooling and runtime:**
-
-- Xcode; build for iOS (simulator or device)
-- Not run in Docker; requires Mac and iOS device or simulator for development and testing
-
-Detailed design constraints, background behaviour, and limitations are documented in [research-apple-workout.md](./research-apple-workout.md).
+Detailed design notes and constraints are documented in [research-strava-api.md](./research-strava-api.md).
 
 ---
 
@@ -212,7 +204,7 @@ Backend and frontend run in containers:
 - **Frontend** – Angular app (build + serve or static)
 - **Optional** – dedicated Prisma migration container
 
-The **iOS app** is built and run via Xcode (Mac only); it is not containerized.
+No native mobile app is required; workout data comes from the Strava API.
 
 **Goals:**
 
@@ -248,25 +240,24 @@ This means:
 | Layer      | Responsibility                                    |
 |-----------|----------------------------------------------------|
 | Frontend  | Presentation & user interaction (web)              |
-| iOS app   | HealthKit read & upload to backend (REST client)   |
-| Backend   | Business logic & API                              |
+| Backend   | Business logic, API, Strava API integration       |
 | Database  | Persistence                                       |
 | Prisma    | Schema & migration management                     |
 
-- The frontend and iOS app **never** access the database directly.
+- The frontend **never** accesses the database or Strava directly; it uses only the backend REST API.
 - The database is **never** aware of client structure.
 
 ---
 
 ### 4.3 API as Contract
 
-The API is the **formal contract** between clients (web frontend, iOS app) and backend.
+The API is the **formal contract** between clients (web frontend) and backend.
 
 - OpenAPI specification is generated from NestJS
 - DTOs are explicit
 - Database schema is not exposed directly
 - No leaking of internal persistence models
-- The iOS app uses the same REST contract (e.g. workout import/sync endpoints) as documented in OpenAPI
+- Workout import/sync (from Strava) is implemented in the backend and exposed via OpenAPI-documented endpoints where needed
 
 The OpenAPI spec is considered part of the documentation and **must** be version-controlled.
 
@@ -281,9 +272,8 @@ The project uses a **monorepo**.
 ```
 /
 ├── apps/
-│   ├── backend/          # NestJS API
+│   ├── backend/          # NestJS API (Strava integration for workouts)
 │   ├── frontend/         # Angular app (web)
-│   └── app/              # iOS app (HealthKit → REST to backend)
 ├── packages/
 │   └── api-contract/     # Optional: shared OpenAPI types
 ├── prisma/
@@ -292,7 +282,7 @@ The project uses a **monorepo**.
 └── .docs/
     └── system/
         ├── setup-architecture.md
-        └── research-apple-workout.md   # HealthKit / iOS sync design
+        └── research-strava-api.md   # Strava API as workout data source
 ```
 
 The repository is the **single source of truth**, including:
@@ -395,13 +385,13 @@ The system is deliberately **simple**.
 | Category   | Technology              |
 |-----------|--------------------------|
 | Frontend  | Angular (web); Tailwind CSS + daisyUI |
-| iOS app   | Native iOS (Swift), HealthKit, REST client |
+| Workout data source | Strava API (backend integration) |
 | Backend   | NestJS (TypeScript)      |
 | Database  | MySQL                    |
 | ORM / migrations | Prisma, Prisma Migrate |
 | API contract | OpenAPI              |
-| Runtime   | Docker (backend, frontend, DB); Xcode (iOS app) |
-| Repo      | Monorepo (`apps/backend`, `apps/frontend`, `apps/app`) |
+| Runtime   | Docker (backend, frontend, DB) |
+| Repo      | Monorepo (`apps/backend`, `apps/frontend`) |
 | Truth     | Repository as single source of truth |
 
 The architecture is intentionally:

@@ -117,6 +117,23 @@ const MAX_KM_TARGET = 100000;
             }
           </label>
 
+          @if (isEdit()) {
+            <label class="form-control w-full mb-6">
+              <div class="label">
+                <input
+                  type="checkbox"
+                  formControlName="isDefault"
+                  class="checkbox checkbox-primary"
+                  data-cy="shoe-is-default"
+                />
+                <span class="label-text">Default shoe for Strava sync</span>
+              </div>
+              <span class="label text-base-content/70 text-sm"
+                >Newly imported workouts will be assigned to this shoe when it is default.</span
+              >
+            </label>
+          }
+
           <div class="flex gap-2">
             <button type="submit" class="btn btn-primary" [disabled]="form.invalid" data-cy="shoe-submit">
               @if (saving()) {
@@ -149,6 +166,7 @@ export class ShoeFormComponent implements OnInit {
     buyingDate: ['', Validators.required],
     buyingLocation: [''],
     kilometerTarget: [0, [Validators.required, Validators.min(0), Validators.max(MAX_KM_TARGET)]],
+    isDefault: [false],
   });
 
   protected readonly isEdit = computed(() => !!this.shoeId());
@@ -170,6 +188,7 @@ export class ShoeFormComponent implements OnInit {
               buyingDate: shoe.buyingDate.toString().slice(0, 10),
               buyingLocation: shoe.buyingLocation ?? '',
               kilometerTarget: shoe.kilometerTarget,
+              isDefault: shoe.isDefault,
             });
           },
           error: () => {
@@ -187,7 +206,7 @@ export class ShoeFormComponent implements OnInit {
     this.formError.set('');
 
     const raw = this.form.getRawValue();
-    const payload = {
+    const basePayload = {
       photoUrl: raw.photoUrl,
       brandName: raw.brandName,
       shoeName: raw.shoeName,
@@ -198,6 +217,7 @@ export class ShoeFormComponent implements OnInit {
 
     const id = this.shoeId();
     if (id !== null) {
+      const payload = { ...basePayload, isDefault: raw.isDefault };
       this.shoesService.update(id, payload).subscribe({
         next: () => {
           this.saving.set(false);
@@ -209,7 +229,7 @@ export class ShoeFormComponent implements OnInit {
         },
       });
     } else {
-      this.shoesService.create(payload).subscribe({
+      this.shoesService.create(basePayload).subscribe({
         next: () => {
           this.saving.set(false);
           this.router.navigateByUrl('/shoes');

@@ -13,7 +13,7 @@
   - Refactor existing login spec to the new structure; ensure at least one smoke test verifies a real user flow.
   - Single GitHub Actions workflow (system-tests) running backend tests and Cypress E2E on every push (Cypress job: MySQL, migrations, test-migrations, backend, frontend, then Cypress headless).
 - **Out-of-Scope summary (bullets):**
-  - Backend or iOS test changes (ticket 4 covers backend).
+  - Backend or Strava/sync test changes (ticket 4 covers backend).
   - Cypress Component Testing (mount-based).
   - Full coverage of every screen; strategy and structure plus representative specs only.
   - Changing Prisma test-migrations content or runner; only alignment of smoke tests with existing test data.
@@ -36,7 +36,7 @@
 | OpenAPI contract | None. | No API changes. |
 | Docker/Compose | None. | CI uses GitHub Actions services (MySQL); no docker-compose change required. |
 | GitHub Actions | Single system-tests workflow: backend-tests job + cypress-e2e job (migrations, test-migrations, start backend/frontend, run Cypress headless). | Workflow may already exist (system-tests.yml); verify and adjust to match requirements. |
-| iOS (apps/app-ios) | N/A. | Not in scope. |
+| Strava integration | N/A. | Not in scope. |
 
 ---
 
@@ -121,9 +121,9 @@ No OpenAPI or API contract changes.
 
 ---
 
-## 7. iOS App Plan
+## 7. Strava / Workout Sync
 
-Not required. Ticket does not affect iOS.
+Not required. Ticket does not affect Strava integration.
 
 ---
 

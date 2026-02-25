@@ -19,7 +19,7 @@
   - e2e/smoke subblock: real E2E tests that perform real server calls and align with data from Prisma test migrations.
   - Review and adjust/extend existing Cypress configuration and support files; run Cypress E2E in CI via a unified system-tests workflow (renamed from backend-tests; backend and Cypress jobs).
 - **Out-of-Scope (max 5 bullets):**
-  - Backend or iOS test changes (backend remains covered by ticket 4; this is frontend Cypress only).
+  - Backend or Strava/sync test changes (backend remains covered by ticket 4; this is frontend Cypress only).
   - Cypress Component Testing (mount-based); only E2E-style specs with the described structure.
   - Full coverage of every screen or feature in this ticket; strategy and structure plus representative specs.
   - Changing Prisma test-migrations content or runner; only alignment of smoke tests with existing test-migration data.

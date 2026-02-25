@@ -24,7 +24,7 @@ export class ShoesService {
         kilometerTarget: dto.kilometerTarget,
       },
     });
-    return this.toResponse(shoe);
+    return this.toResponse(shoe, { totalSteps: 0, totalDistanceKm: 0 });
   }
 
   async findAll(userId: number): Promise<ShoeResponseDto[]> {
@@ -32,7 +32,26 @@ export class ShoesService {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
-    return shoes.map((s) => this.toResponse(s));
+    if (shoes.length === 0) return [];
+
+    const shoeIds = shoes.map((s) => s.id);
+    const aggregates = await this.prisma.workout.groupBy({
+      by: ['shoeId'],
+      where: { shoeId: { in: shoeIds } },
+      _sum: { steps: true, distanceKm: true },
+    });
+    const totalsByShoeId = new Map<number, { totalSteps: number; totalDistanceKm: number }>();
+    for (const row of aggregates) {
+      if (row.shoeId != null) {
+        totalsByShoeId.set(row.shoeId, {
+          totalSteps: row._sum.steps ?? 0,
+          totalDistanceKm: Number(row._sum.distanceKm ?? 0),
+        });
+      }
+    }
+    return shoes.map((s) =>
+      this.toResponse(s, totalsByShoeId.get(s.id) ?? { totalSteps: 0, totalDistanceKm: 0 }),
+    );
   }
 
   async findOne(id: number, userId: number): Promise<ShoeResponseDto> {
@@ -42,7 +61,13 @@ export class ShoesService {
     if (!shoe) {
       throw new NotFoundException(`Shoe with id ${id} not found`);
     }
-    return this.toResponse(shoe);
+    const agg = await this.prisma.workout.aggregate({
+      where: { shoeId: id },
+      _sum: { steps: true, distanceKm: true },
+    });
+    const totalSteps = agg._sum.steps ?? 0;
+    const totalDistanceKm = Number(agg._sum.distanceKm ?? 0);
+    return this.toResponse(shoe, { totalSteps, totalDistanceKm });
   }
 
   async update(
@@ -55,6 +80,12 @@ export class ShoesService {
     });
     if (!existing) {
       throw new NotFoundException(`Shoe with id ${id} not found`);
+    }
+    if (dto.isDefault === true) {
+      await this.prisma.shoe.updateMany({
+        where: { userId, id: { not: id } },
+        data: { isDefault: false },
+      });
     }
     const shoe = await this.prisma.shoe.update({
       where: { id },
@@ -71,9 +102,29 @@ export class ShoesService {
         ...(dto.kilometerTarget !== undefined && {
           kilometerTarget: dto.kilometerTarget,
         }),
+        ...(dto.isDefault !== undefined && { isDefault: dto.isDefault }),
       },
     });
-    return this.toResponse(shoe);
+    const agg = await this.prisma.workout.aggregate({
+      where: { shoeId: id },
+      _sum: { steps: true, distanceKm: true },
+    });
+    return this.toResponse(shoe, {
+      totalSteps: agg._sum.steps ?? 0,
+      totalDistanceKm: Number(agg._sum.distanceKm ?? 0),
+    });
+  }
+
+  /**
+   * Returns the id of the user's default shoe, or null if none is set.
+   * Used by Strava sync to assign newly imported workouts to the default shoe.
+   */
+  async findDefaultShoeId(userId: number): Promise<number | null> {
+    const shoe = await this.prisma.shoe.findFirst({
+      where: { userId, isDefault: true },
+      select: { id: true },
+    });
+    return shoe?.id ?? null;
   }
 
   async remove(id: number, userId: number): Promise<void> {
@@ -94,18 +145,22 @@ export class ShoesService {
     await this.prisma.shoe.delete({ where: { id } });
   }
 
-  private toResponse(shoe: {
-    id: number;
-    userId: number;
-    photoUrl: string;
-    brandName: string;
-    shoeName: string;
-    buyingDate: Date;
-    buyingLocation: string | null;
-    kilometerTarget: number;
-    createdAt: Date;
-    updatedAt: Date;
-  }): ShoeResponseDto {
+  private toResponse(
+    shoe: {
+      id: number;
+      userId: number;
+      photoUrl: string;
+      brandName: string;
+      shoeName: string;
+      buyingDate: Date;
+      buyingLocation: string | null;
+      kilometerTarget: number;
+      isDefault: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+    totals: { totalSteps: number; totalDistanceKm: number },
+  ): ShoeResponseDto {
     return {
       id: shoe.id,
       userId: shoe.userId,
@@ -115,6 +170,9 @@ export class ShoesService {
       buyingDate: shoe.buyingDate,
       buyingLocation: shoe.buyingLocation,
       kilometerTarget: shoe.kilometerTarget,
+      totalSteps: totals.totalSteps,
+      totalDistanceKm: totals.totalDistanceKm,
+      isDefault: shoe.isDefault,
       createdAt: shoe.createdAt,
       updatedAt: shoe.updatedAt,
     };

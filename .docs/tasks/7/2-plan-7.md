@@ -11,7 +11,7 @@
   - Backend unit and integration tests for workout logic and shoe-delete constraint; Prisma test data migration for workout fixtures (dev/stage only).
   - Smoke E2E test in Cypress: create workout → verify in overview → edit all data → delete workout (required).
 - **Out-of-Scope summary (bullets):**
-  - HealthKit sync or external workout import; admin workout management; iOS app changes; automatic shoe distance aggregation; layout/auth redesign beyond new menu and routes.
+  - Strava sync or external workout import; admin workout management; Strava integration changes; automatic shoe distance aggregation; layout/auth redesign beyond new menu and routes.
 - **Key assumptions (from requirements):**
   - Workout management is for role USER only; ADMIN does not see or access workout endpoints/UI.
   - Workouts are strictly per-user; shoe reference must be one of the user's shoes.
@@ -29,7 +29,7 @@
 | Database (MySQL via Prisma) | New Workout model; relation User → Workout, optional Workout → Shoe; Shoe has many Workouts. | Prisma Migrate only. |
 | OpenAPI contract | New workout endpoints and DTOs in Swagger; no persistence details. | Regenerate from NestJS/Swagger. |
 | Docker/Compose | No changes. | — |
-| iOS (apps/app-ios) | Not in scope. | — |
+| Strava integration | Not in scope. | — |
 
 ---
 
@@ -178,9 +178,9 @@ Rules: Stateless REST only. No business logic in controllers beyond orchestratio
 
 ---
 
-## 7. iOS App Plan (ONLY if required)
+## 7. Strava / Workout Sync (ONLY if required)
 
-Not required. No iOS changes in this ticket.
+Not required. No Strava integration changes in this ticket.
 
 ---
 

@@ -1,5 +1,9 @@
 # Programmgesteuerter Zugriff auf Apple Workout-Daten und Hintergrund-Synchronisation
 
+**Archived.** The project no longer uses a native iOS app or HealthKit for workout data. Workout data is synced via the **Strava API** instead. See [research-strava-api.md](./research-strava-api.md). The content below is kept for historical reference only.
+
+---
+
 ## Executive Summary
 
 Apple stellt **keine serverseitige/REST-basierte HealthKit-API** bereit, mit der ein Backend direkt (ohne iPhone/Watch als Gatekeeper) auf Workouts zugreifen könnte. HealthKit ist als **zentraler, lokaler** Speicher für Gesundheits- und Fitnessdaten auf **iPhone und Apple Watch** konzipiert; Apps greifen **nur mit expliziter Nutzerfreigabe** auf dem Gerät darauf zu. 
