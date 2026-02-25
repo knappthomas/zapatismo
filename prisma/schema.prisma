@@ -23,6 +23,20 @@ model User {
   @@map("users")
 }
 
+model ShoePair {
+  id           Int      @id @default(autoincrement())
+  name         String
+  brand        String?
+  model        String?
+  color        String?
+  notes        String?  @db.Text
+  photoDataUrl String?  @map("photo_data_url") @db.LongText
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("shoe_pairs")
+}
+
 // Tracks applied test migrations (data-only, dev/stage). Do not use for app logic.
 model TestMigration {
   name      String   @id
