@@ -1,0 +1,125 @@
+# Backend tests + frontend Cypress E2E on every push to every branch.
+# Backend: unit and integration tests with MySQL.
+# Cypress: E2E tests with backend + frontend running; DB has migrations + test-migrations for smoke.
+name: System tests
+
+on:
+  push:
+    branches: ['**']
+
+jobs:
+  backend-tests:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: zapatismo_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: mysql://root:root@localhost:3306/zapatismo_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      - name: Run unit tests
+        run: npm run test --workspace=@zapatismo/backend
+
+      - name: Run integration tests
+        run: npm run test:integration --workspace=@zapatismo/backend
+
+  cypress-e2e:
+    name: Cypress E2E
+    runs-on: ubuntu-latest
+    needs: []  # run in parallel with backend-tests
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: zapatismo_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: mysql://root:root@localhost:3306/zapatismo_test
+      # Backend auth (match dev defaults; not for production)
+      JWT_SECRET: ci-jwt-secret-not-for-production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      - name: Apply test migrations
+        run: npm run prisma:test-migrations
+        env:
+          RUN_TEST_MIGRATIONS: 'true'
+
+      - name: Start backend
+        run: npm run start --workspace=@zapatismo/backend &
+        env:
+          NODE_ENV: development
+
+      - name: Build frontend
+        run: npm run build --workspace=frontend
+
+      - name: Start frontend
+        run: npm run start --workspace=frontend &
+
+      - name: Wait for backend and frontend
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/api/docs > /dev/null && curl -sf http://localhost:4200 > /dev/null && break
+            sleep 2
+          done
+          sleep 2
+
+      - name: Run Cypress E2E
+        run: npm run e2e:headless -w frontend
+        env:
+          CYPRESS_baseUrl: http://localhost:4200

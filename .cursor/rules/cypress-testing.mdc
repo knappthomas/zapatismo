@@ -1,16 +1,30 @@
 ---
-description: Cypress E2E testing conventions – component coverage, fixtures, one smoke test
+description: Cypress E2E testing conventions – three-tier structure (Component Test, e2e/fixtures, e2e/smoke), fixtures, one smoke test
 globs: apps/frontend/cypress/**
 alwaysApply: false
 ---
 
 # Cypress E2E Testing
 
-- **Every component/feature must have E2E tests.** No Cypress component tests; use E2E only.
+## Three-tier describe-block structure
+
+Every E2E spec file **must** use this structure (exact block names):
+
+1. **Component Test** (top-level `describe('Component Test', ...)`)  
+   Lightweight UI/component checks: field length, show/hide, validation, disable/enable. **No real server required.** May use `cy.visit` and `cy.intercept` with fixtures. Single place for fast checks without backend.
+
+2. **e2e** (top-level `describe('e2e', ...)`) with two nested subblocks:
+   - **fixtures** – `describe('fixtures', ...)`: Drive different UI states (empty, loading, loaded, error) using fixture data and intercepts. **No real server required** for these tests; all API calls under test must be stubbed.
+   - **smoke** – `describe('smoke', ...)`: Real E2E tests that perform **real HTTP requests** to the backend (no stubbing of the endpoints under test). Must align with data from **Prisma test-migrations** (e.g. seeded users in `prisma/test-migrations/`). Smoke tests require a running backend and DB with migrations and test-migrations applied. When smoke tests need credentials or entities (e.g. login), use only data created by test-migrations (see `prisma/test-migrations/` and backend docs for which users/data exist; e.g. `00002_thomas_user.ts`). No production credentials; dev/test only.
+
+**One smoke test only** in the whole repo – a single smoke test that verifies a real user flow (e.g. app load and redirect to login, or login with test-migration user). No duplicate "app is up" tests elsewhere. That test lives under `e2e` → `smoke` in the appropriate feature spec (e.g. login).
+
+---
+
+- **Every component/feature must have E2E tests.** No Cypress component tests (no mount); use E2E only.
 - **Specs in feature subfolders** – put each feature’s spec under `cypress/e2e/<feature>/<feature>.cy.ts` (e.g. `e2e/login/login.cy.ts`). Do not put specs directly under `e2e/`.
 - **Page objects next to the spec** – put page objects for a feature in `cypress/e2e/<feature>/po/` (e.g. `e2e/login/po/LoginPO.ts`). They must extend `MainPO` from `cypress/page-objects/MainPO.ts` and use `protected` root (getter) for scoped queries.
-- **One smoke test only** – a single smoke test that checks the app loads and basic connection works (e.g. inside a feature spec under a `Smoke` describe block). No duplicate “app is up” tests elsewhere.
-- **Component states via fixtures** – drive different UI states (empty, loading, loaded, error) with fixture data. Do not hardcode state in specs.
+- **Component states via fixtures** – in the **e2e → fixtures** block, drive different UI states (empty, loading, loaded, error) with fixture data. Do not hardcode state in specs.
 - **Organize fixtures in subfolders** – under `cypress/fixtures/`, use one subfolder per feature or component (e.g. `fixtures/dashboard/`, `fixtures/login/`). Keep fixture files small and named by state (e.g. `empty.json`, `list.json`, `error-404.json`).
 - **Server errors and exceptions** – test error/exception paths with fixtures (e.g. 4xx/5xx responses). Use `cy.intercept()` with fixture responses to simulate server failures and assert error UI/messages.
 
@@ -45,14 +59,26 @@ export class LoginPO extends MainPO {
 }
 ```
 
-**Example spec (in `e2e/login/login.cy.ts`):**
+**Example spec structure (in `e2e/login/login.cy.ts`):**
 
 ```typescript
 import { LoginPO } from './po/LoginPO';
 
 describe('Login', () => {
   const po = new LoginPO();
-  // ...
+
+  describe('Component Test', () => {
+    // Lightweight checks: validation, disable/enable, no real server
+  });
+
+  describe('e2e', () => {
+    describe('fixtures', () => {
+      // Intercept-driven tests; fixture data; no real server
+    });
+    describe('smoke', () => {
+      // Real HTTP to backend; align with prisma/test-migrations data
+    });
+  });
 });
 ```
 
