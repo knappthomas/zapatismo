@@ -65,12 +65,18 @@ describe('Shoes', () => {
         cy.contains('Nike').should('be.visible');
       });
 
-      it('grid shows total steps and distance progress bar per shoe', () => {
+      it('grid shows distance progress bar per shoe', () => {
         cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
         cy.visit('/shoes');
         overviewPO.shoesGrid.should('be.visible');
-        overviewPO.shoeTotalSteps.first().should('contain', '12500');
         overviewPO.shoeDistanceProgress.first().should('be.visible');
+      });
+
+      it('grid does not show step count', () => {
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.visit('/shoes');
+        overviewPO.shoesGrid.should('be.visible');
+        overviewPO.shoeTotalSteps.should('not.exist');
       });
 
       it('overview shows default badge when list has one default shoe', () => {

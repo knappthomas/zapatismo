@@ -38,11 +38,8 @@ import { Shoe } from '../../core/models/shoe.model';
                 }
               </div>
               <p class="text-sm text-base-content/80">{{ shoe.brandName }}</p>
-              <p class="text-sm mt-1">
-                <span data-cy="shoe-total-steps">Steps: {{ shoe.totalSteps }}</span>
-              </p>
               <div class="mt-2">
-                <span class="text-sm">Distance: {{ shoe.totalDistanceKm | number : '1.1-1' }} / {{ effectiveTargetKm(shoe) }} km</span>
+                <span class="text-sm">Distance: {{ shoe.totalDistanceKm | number : '1.2-2' }} / {{ effectiveTargetKm(shoe) }} km</span>
                 <progress
                   class="progress progress-primary mt-1 w-full"
                   [attr.value]="distanceProgressPercent(shoe)"

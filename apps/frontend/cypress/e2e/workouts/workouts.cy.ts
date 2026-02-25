@@ -45,6 +45,66 @@ describe('Workouts', () => {
         cy.contains('Villach Park').should('be.visible');
         cy.contains('Central Park').should('be.visible');
       });
+
+      it('workouts list shows distance with exactly two decimal places', () => {
+        cy.intercept('GET', '**/api/workouts', {
+          body: [
+            {
+              id: 1,
+              userId: 1,
+              type: 'RUNNING',
+              startTime: '2025-02-20T08:00:00.000Z',
+              endTime: '2025-02-20T09:15:00.000Z',
+              steps: 10000,
+              distanceKm: 10.1234,
+              location: 'Test Run',
+              shoeId: null,
+              shoe: null,
+              createdAt: '2025-02-20T10:00:00.000Z',
+              updatedAt: '2025-02-20T10:00:00.000Z',
+            },
+          ],
+        });
+        cy.visit('/workouts');
+        cy.get('[data-cy="workouts-list"]').within(() => {
+          // Locale may show 10.12 or 10,12
+          cy.contains(/10[.,]12/).should('be.visible');
+        });
+      });
+
+      it('sync modal shows warning when user has no default shoe', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.intercept('GET', '**/api/strava/last-sync', { body: { lastSyncAt: null } });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.visit('/workouts');
+        overviewPO.syncStravaButton.click();
+        overviewPO.syncModal.should('be.visible');
+        overviewPO.syncNoDefaultShoeWarning
+          .should('be.visible')
+          .and('contain', "You don't have a default shoe set");
+      });
+
+      it('sync modal shows no warning when user has default shoe', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.intercept('GET', '**/api/strava/last-sync', { body: { lastSyncAt: null } });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded-with-default.json' });
+        cy.visit('/workouts');
+        overviewPO.syncStravaButton.click();
+        overviewPO.syncModal.should('be.visible');
+        overviewPO.syncNoDefaultShoeWarning.should('not.exist');
+      });
+
+      it('sync modal shows warning when user has no shoes', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.intercept('GET', '**/api/strava/last-sync', { body: { lastSyncAt: null } });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/empty.json' });
+        cy.visit('/workouts');
+        overviewPO.syncStravaButton.click();
+        overviewPO.syncModal.should('be.visible');
+        overviewPO.syncNoDefaultShoeWarning
+          .should('be.visible')
+          .and('contain', "You don't have a default shoe set");
+      });
     });
 
     describe('Error Handling', () => {

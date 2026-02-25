@@ -1,12 +1,12 @@
 import { Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 
 import { Workout } from '../../core/models/workout.model';
 
 @Component({
   selector: 'app-workouts-list-part',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, DecimalPipe],
   template: `
     @if (loading()) {
       <div class="flex justify-center py-12">
@@ -31,7 +31,6 @@ import { Workout } from '../../core/models/workout.model';
               <th>Type</th>
               <th>Start</th>
               <th>End</th>
-              <th>Steps</th>
               <th>Distance (km)</th>
               <th>Location</th>
               <th>Shoe</th>
@@ -46,8 +45,7 @@ import { Workout } from '../../core/models/workout.model';
                 <td><span class="badge badge-outline">{{ workout.type }}</span></td>
                 <td>{{ workout.startTime | date: 'short' }}</td>
                 <td>{{ workout.endTime | date: 'short' }}</td>
-                <td>{{ workout.steps }}</td>
-                <td>{{ workout.distanceKm }}</td>
+                <td>{{ workout.distanceKm | number : '1.2-2' }}</td>
                 <td>{{ workout.location }}</td>
                 <td>{{ shoeLabel(workout) }}</td>
                 @if (showActions()) {

@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Workout } from '../../core/models/workout.model';
+import { ShoesService } from '../../core/services/shoes.service';
 import { StravaService } from '../../core/services/strava.service';
 import { WorkoutsService } from '../../core/services/workouts.service';
 import { WorkoutsListPartComponent } from './workouts-list-part.component';
@@ -47,6 +48,11 @@ function defaultFromDate(): string {
             <p class="text-sm text-base-content/70 py-2">
               Import running and walking activities from this date until now.
             </p>
+            @if (syncModalShoesLoaded() && !syncModalHasDefaultShoe()) {
+              <div role="alert" class="alert alert-warning my-2" data-cy="sync-no-default-shoe-warning">
+                <span>You don't have a default shoe set. Synced workouts will not be assigned to a shoe. You can set a default in Shoes.</span>
+              </div>
+            }
             <div class="form-control py-2">
               <label class="label" for="sync-from-date">
                 <span class="label-text">From date</span>
@@ -127,6 +133,7 @@ function defaultFromDate(): string {
 export class WorkoutsOverviewComponent implements OnInit {
   private readonly workoutsService = inject(WorkoutsService);
   private readonly stravaService = inject(StravaService);
+  private readonly shoesService = inject(ShoesService);
 
   protected readonly workouts = signal<Workout[]>([]);
   protected readonly loading = signal(true);
@@ -139,6 +146,9 @@ export class WorkoutsOverviewComponent implements OnInit {
   protected readonly syncLoading = signal(false);
   protected readonly syncResult = signal<string | null>(null);
   protected readonly syncError = signal('');
+  /** Set when shoes have been loaded in sync modal; used to show "no default shoe" warning. */
+  protected readonly syncModalShoesLoaded = signal(false);
+  protected readonly syncModalHasDefaultShoe = signal(false);
 
   ngOnInit(): void {
     this.loadWorkouts();
@@ -161,6 +171,8 @@ export class WorkoutsOverviewComponent implements OnInit {
     this.syncModalOpen.set(true);
     this.syncResult.set(null);
     this.syncError.set('');
+    this.syncModalShoesLoaded.set(false);
+    this.syncModalHasDefaultShoe.set(false);
     this.stravaService.getLastSync().subscribe({
       next: (res) => {
         if (res.lastSyncAt) {
@@ -173,12 +185,24 @@ export class WorkoutsOverviewComponent implements OnInit {
         this.syncFromDate.set(defaultFromDate());
       },
     });
+    this.shoesService.getList().subscribe({
+      next: (shoes) => {
+        this.syncModalShoesLoaded.set(true);
+        this.syncModalHasDefaultShoe.set(shoes.some((s) => s.isDefault));
+      },
+      error: () => {
+        this.syncModalShoesLoaded.set(true);
+        this.syncModalHasDefaultShoe.set(false);
+      },
+    });
   }
 
   protected closeSyncModal(): void {
     this.syncModalOpen.set(false);
     this.syncResult.set(null);
     this.syncError.set('');
+    this.syncModalShoesLoaded.set(false);
+    this.syncModalHasDefaultShoe.set(false);
   }
 
   protected onSyncFromDateChange(event: Event): void {
