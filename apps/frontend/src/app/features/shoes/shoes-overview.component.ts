@@ -4,12 +4,13 @@ import { DatePipe } from '@angular/common';
 
 import { Shoe } from '../../core/models/shoe.model';
 import { ShoesService } from '../../core/services/shoes.service';
+import { ShoesGridPartComponent } from './shoes-grid-part.component';
 
 type ViewMode = 'grid' | 'list';
 
 @Component({
   selector: 'app-shoes-overview',
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, ShoesGridPartComponent],
   template: `
     <div class="max-w-6xl mx-auto" data-cy="shoes-overview">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -39,40 +40,27 @@ type ViewMode = 'grid' | 'list';
         </div>
       </div>
 
-      @if (loading()) {
-        <div class="flex justify-center py-12">
-          <span class="loading loading-spinner loading-lg"></span>
-        </div>
-      } @else if (error()) {
-        <div role="alert" class="alert alert-error">
-          <span>{{ error() }}</span>
-        </div>
-      } @else if (shoes().length === 0) {
-        <div class="text-center py-12 text-base-content/70">
-          <p>No shoes yet. Add your first shoe to get started.</p>
-          <a routerLink="/shoes/new" class="btn btn-primary mt-4">Add Shoe</a>
-        </div>
+      @if (viewMode() === 'grid') {
+        <app-shoes-grid-part
+          [shoes]="shoes()"
+          [loading]="loading()"
+          [error]="error()"
+          [showActions]="true"
+          (deleteShoe)="openDeleteConfirm($event)"
+        />
       } @else {
-        @if (viewMode() === 'grid') {
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            @for (shoe of shoes(); track shoe.id) {
-              <div class="card bg-base-200 shadow-sm">
-                <figure class="h-40 bg-base-300">
-                  <img [src]="shoe.photoUrl" [alt]="shoe.shoeName" class="object-cover w-full h-full" />
-                </figure>
-                <div class="card-body p-4">
-                  <h2 class="card-title text-lg">{{ shoe.shoeName }}</h2>
-                  <p class="text-sm text-base-content/80">{{ shoe.brandName }}</p>
-                  <p class="text-sm">Target: {{ shoe.kilometerTarget }} km</p>
-                  <div class="card-actions justify-end mt-2">
-                    <a [routerLink]="['/shoes', shoe.id, 'edit']" class="btn btn-ghost btn-sm">Edit</a>
-                    <button type="button" class="btn btn-ghost btn-sm btn-error" (click)="openDeleteConfirm(shoe)">
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            }
+        @if (loading()) {
+          <div class="flex justify-center py-12">
+            <span class="loading loading-spinner loading-lg"></span>
+          </div>
+        } @else if (error()) {
+          <div role="alert" class="alert alert-error">
+            <span>{{ error() }}</span>
+          </div>
+        } @else if (shoes().length === 0) {
+          <div class="text-center py-12 text-base-content/70">
+            <p>No shoes yet. Add your first shoe to get started.</p>
+            <a routerLink="/shoes/new" class="btn btn-primary mt-4">Add Shoe</a>
           </div>
         } @else {
           <div class="overflow-x-auto">
