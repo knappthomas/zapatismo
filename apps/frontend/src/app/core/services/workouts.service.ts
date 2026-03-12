@@ -8,6 +8,12 @@ import type {
   UpdateWorkoutPayload,
 } from '../models/workout.model';
 
+/** Payload for bulk-assign-shoe; aligned with backend BulkAssignShoeDto. */
+export interface BulkAssignShoePayload {
+  workoutIds: number[];
+  shoeId: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class WorkoutsService {
   private readonly baseUrl = `${environment.apiUrl}/workouts`;
@@ -16,6 +22,11 @@ export class WorkoutsService {
 
   getList() {
     return this.http.get<Workout[]>(this.baseUrl);
+  }
+
+  /** Assign one shoe to many workouts (current user's). Returns updated workouts. */
+  bulkAssignShoe(payload: BulkAssignShoePayload) {
+    return this.http.patch<Workout[]>(`${this.baseUrl}/bulk-assign-shoe`, payload);
   }
 
   getOne(id: number) {

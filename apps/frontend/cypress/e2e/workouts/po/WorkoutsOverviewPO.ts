@@ -44,4 +44,37 @@ export class WorkoutsOverviewPO extends MainPO {
   get syncCancelButton() {
     return this.root.find('[data-cy="sync-cancel"]');
   }
+
+  /** Toolbar shown when at least one workout is selected (contains Assign Shoe). */
+  get assignShoeToolbar() {
+    return this.root.find('[data-cy="workouts-toolbar"]');
+  }
+
+  get assignShoeButton() {
+    return this.root.find('[data-cy="assign-shoe-btn"]');
+  }
+
+  get assignShoeModal() {
+    return this.root.find('[data-cy="assign-shoe-modal"]');
+  }
+
+  get assignShoeNoShoes() {
+    return this.root.find('[data-cy="assign-shoe-no-shoes"]');
+  }
+
+  get assignShoeSelect() {
+    return this.root.find('[data-cy="assign-shoe-select"]');
+  }
+
+  get assignShoeError() {
+    return this.root.find('[data-cy="assign-shoe-error"]');
+  }
+
+  get assignShoeCancel() {
+    return this.root.find('[data-cy="assign-shoe-cancel"]');
+  }
+
+  get assignShoeConfirm() {
+    return this.root.find('[data-cy="assign-shoe-confirm"]');
+  }
 }
