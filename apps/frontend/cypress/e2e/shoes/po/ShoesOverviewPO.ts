@@ -35,8 +35,18 @@ export class ShoesOverviewPO extends MainPO {
     return this.root.find('[data-cy="shoe-distance-progress"]');
   }
 
-  /** Default shoe badge(s) in grid/list (visible when shoe.isDefault). */
+  /** Default Running badge(s) in grid/list. */
+  get defaultRunningBadges() {
+    return this.root.find('[data-cy="shoe-default-running-badge"]');
+  }
+
+  /** Default Walking badge(s) in grid/list. */
+  get defaultWalkingBadges() {
+    return this.root.find('[data-cy="shoe-default-walking-badge"]');
+  }
+
+  /** Any default badge (running or walking) in grid/list. */
   get defaultBadges() {
-    return this.root.find('[data-cy="shoe-default-badge"]');
+    return this.root.find('[data-cy="shoe-default-running-badge"], [data-cy="shoe-default-walking-badge"]');
   }
 }

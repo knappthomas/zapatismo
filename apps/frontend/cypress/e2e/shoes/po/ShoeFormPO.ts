@@ -37,8 +37,13 @@ export class ShoeFormPO extends MainPO {
     return this.root.find('[data-cy="shoe-form-error"]');
   }
 
-  /** Default shoe for Strava sync checkbox (edit mode only). */
-  get defaultCheckbox() {
-    return this.root.find('[data-cy="shoe-is-default"]');
+  /** Default for running checkbox (edit mode only). */
+  get defaultRunningCheckbox() {
+    return this.root.find('[data-cy="shoe-is-default-running"]');
+  }
+
+  /** Default for walking checkbox (edit mode only). */
+  get defaultWalkingCheckbox() {
+    return this.root.find('[data-cy="shoe-is-default-walking"]');
   }
 }

@@ -33,8 +33,11 @@ import { Shoe } from '../../core/models/shoe.model';
             <div class="card-body p-4">
               <div class="flex items-center gap-2 flex-wrap">
                 <h2 class="card-title text-lg">{{ shoe.shoeName }}</h2>
-                @if (shoe.isDefault) {
-                  <span class="badge badge-primary badge-sm" data-cy="shoe-default-badge">Default</span>
+                @if (shoe.isDefaultForRunning) {
+                  <span class="badge badge-primary badge-sm" data-cy="shoe-default-running-badge">Default Running</span>
+                }
+                @if (shoe.isDefaultForWalking) {
+                  <span class="badge badge-secondary badge-sm" data-cy="shoe-default-walking-badge">Default Walking</span>
                 }
               </div>
               <p class="text-sm text-base-content/80">{{ shoe.brandName }}</p>

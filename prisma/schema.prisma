@@ -55,9 +55,10 @@ model Shoe {
   shoeName        String   @map("shoe_name") @db.VarChar(75)
   buyingDate      DateTime @map("buying_date") @db.Date
   buyingLocation  String?  @map("buying_location") @db.VarChar(255)
-  kilometerTarget Int      @map("kilometer_target")
-  isDefault       Boolean  @default(false) @map("is_default")
-  createdAt       DateTime @default(now()) @map("created_at")
+  kilometerTarget       Int      @map("kilometer_target")
+  isDefaultForRunning   Boolean  @default(false) @map("is_default_for_running")
+  isDefaultForWalking   Boolean  @default(false) @map("is_default_for_walking")
+  createdAt             DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)

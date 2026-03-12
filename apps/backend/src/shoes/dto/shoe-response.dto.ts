@@ -33,9 +33,13 @@ export class ShoeResponseDto {
   @ApiProperty()
   totalDistanceKm!: number;
 
-  /** Whether this shoe is the user's default for Strava sync (at most one per user). */
+  /** Whether this shoe is the user's default for running (Strava sync assigns new running workouts to it). At most one per user. */
   @ApiProperty()
-  isDefault!: boolean;
+  isDefaultForRunning!: boolean;
+
+  /** Whether this shoe is the user's default for walking (Strava sync assigns new walking workouts to it). At most one per user. */
+  @ApiProperty()
+  isDefaultForWalking!: boolean;
 
   @ApiProperty()
   createdAt!: Date;

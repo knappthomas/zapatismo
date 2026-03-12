@@ -72,38 +72,45 @@ describe('Workouts', () => {
         });
       });
 
-      it('sync modal shows warning when user has no default shoe', () => {
+      it('sync modal shows warnings when user has no default running or walking shoe', () => {
         cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
         cy.intercept('GET', '**/api/strava/last-sync', { body: { lastSyncAt: null } });
         cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
         cy.visit('/workouts');
         overviewPO.syncStravaButton.click();
         overviewPO.syncModal.should('be.visible');
-        overviewPO.syncNoDefaultShoeWarning
+        overviewPO.syncNoDefaultRunningShoeWarning
           .should('be.visible')
-          .and('contain', "You don't have a default shoe set");
+          .and('contain', 'No default running shoe set');
+        overviewPO.syncNoDefaultWalkingShoeWarning
+          .should('be.visible')
+          .and('contain', 'No default walking shoe set');
       });
 
-      it('sync modal shows no warning when user has default shoe', () => {
+      it('sync modal shows no warning when user has default running and walking shoe', () => {
         cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
         cy.intercept('GET', '**/api/strava/last-sync', { body: { lastSyncAt: null } });
         cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded-with-default.json' });
         cy.visit('/workouts');
         overviewPO.syncStravaButton.click();
         overviewPO.syncModal.should('be.visible');
-        overviewPO.syncNoDefaultShoeWarning.should('not.exist');
+        overviewPO.syncNoDefaultRunningShoeWarning.should('not.exist');
+        overviewPO.syncNoDefaultWalkingShoeWarning.should('not.exist');
       });
 
-      it('sync modal shows warning when user has no shoes', () => {
+      it('sync modal shows warnings when user has no shoes', () => {
         cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
         cy.intercept('GET', '**/api/strava/last-sync', { body: { lastSyncAt: null } });
         cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/empty.json' });
         cy.visit('/workouts');
         overviewPO.syncStravaButton.click();
         overviewPO.syncModal.should('be.visible');
-        overviewPO.syncNoDefaultShoeWarning
+        overviewPO.syncNoDefaultRunningShoeWarning
           .should('be.visible')
-          .and('contain', "You don't have a default shoe set");
+          .and('contain', 'No default running shoe set');
+        overviewPO.syncNoDefaultWalkingShoeWarning
+          .should('be.visible')
+          .and('contain', 'No default walking shoe set');
       });
 
       it('overview shows select column and allows selecting rows', () => {
