@@ -17,6 +17,7 @@ RUN npm ci
 
 # Copy Prisma schema and migrations (required for generate and for final image)
 COPY prisma ./prisma/
+COPY scripts ./scripts/
 RUN npx prisma generate
 
 # Copy backend source and build
@@ -37,8 +38,9 @@ COPY apps/backend/package.json ./apps/backend/
 # Production deps only; then Prisma CLI + ts-node for migrate/seed via docker compose exec
 RUN npm ci --omit=dev && npm install prisma ts-node typescript
 
-# Copy Prisma (schema, migrations, seed) from builder
+# Copy Prisma (schema, migrations, seed) and test-migration runner from builder
 COPY --from=builder /app/prisma ./prisma/
+COPY --from=builder /app/scripts ./scripts/
 
 # Generate Prisma client in runner (required for app and for prisma migrate/seed)
 RUN npx prisma generate
@@ -49,4 +51,4 @@ COPY --from=builder /app/apps/backend/dist ./apps/backend/dist/
 # App runs from /app; Prisma commands are run from /app so they see prisma/
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["node", "apps/backend/dist/main.js"]
+CMD ["node", "apps/backend/dist/src/main.js"]
