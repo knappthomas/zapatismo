@@ -8,9 +8,10 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy workspace and app package files
+# Copy workspace and app package files (include frontend package.json so npm workspaces resolves correctly)
 COPY package.json package-lock.json* ./
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
 
 # Install all dependencies (including dev for build)
 RUN npm ci
@@ -19,9 +20,9 @@ RUN npm ci
 COPY prisma ./prisma/
 RUN npx prisma generate
 
-# Copy backend source and build
+# Copy backend source and build (cd into workspace dir so nest finds nest-cli.json and tsconfig.json)
 COPY apps/backend ./apps/backend/
-RUN npm run build --workspace=@zapatismo/backend
+RUN cd apps/backend && npx nest build
 
 # -----------------------------------------------------------------------------
 # Stage 2: Runner – production runtime + Prisma CLI for migrate/seed in workflows
@@ -30,9 +31,10 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
-# Copy workspace and backend package files for install
+# Copy workspace and backend package files for install (frontend package.json needed for workspace resolution)
 COPY package.json package-lock.json* ./
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
 
 # Production deps only; then Prisma CLI + ts-node for migrate/seed via docker compose exec
 RUN npm ci --omit=dev && npm install prisma ts-node typescript
@@ -49,4 +51,4 @@ COPY --from=builder /app/apps/backend/dist ./apps/backend/dist/
 # App runs from /app; Prisma commands are run from /app so they see prisma/
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["node", "apps/backend/dist/main.js"]
+CMD ["node", "apps/backend/dist/src/main.js"]
