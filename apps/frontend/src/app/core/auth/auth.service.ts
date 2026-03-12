@@ -5,7 +5,7 @@ import { tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { storage } from '../../shared/utils/storage.util';
-import { JwtPayload, LoginRequest, LoginResponse } from './auth.models';
+import { JwtPayload, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from './auth.models';
 
 const TOKEN_KEY = 'access_token';
 
@@ -32,6 +32,10 @@ export class AuthService {
         this.tokenPayload.set(this.decodeToken(res.accessToken));
       }),
     );
+  }
+
+  register(credentials: RegisterRequest) {
+    return this.http.post<RegisterResponse>(`${environment.apiUrl}/auth/register`, credentials);
   }
 
   logout(): void {

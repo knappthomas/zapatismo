@@ -3,10 +3,9 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { PASSWORD_MIN_LENGTH } from '@zapatismo/validation-constants';
 import { UsersService } from '../../core/services/users.service';
 import { Role } from '../../core/models/user.model';
-
-const PASSWORD_MIN_LENGTH = 8;
 
 @Component({
   selector: 'app-user-create',
@@ -45,11 +44,11 @@ const PASSWORD_MIN_LENGTH = 8;
               type="password"
               formControlName="password"
               class="input input-bordered w-full"
-              placeholder="Mindestens 8 Zeichen"
+              [placeholder]="'Mindestens ' + passwordMinLength + ' Zeichen'"
               autocomplete="new-password"
             />
             @if (form.get('password')?.invalid && form.get('password')?.touched) {
-              <span class="label text-error text-sm">Passwort muss mindestens {{ PASSWORD_MIN_LENGTH }} Zeichen haben.</span>
+              <span class="label text-error text-sm">Passwort muss mindestens {{ passwordMinLength }} Zeichen haben.</span>
             }
           </label>
 
@@ -80,7 +79,7 @@ export class UserCreateComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+  protected readonly passwordMinLength = PASSWORD_MIN_LENGTH;
   protected readonly saving = signal(false);
   protected readonly formError = signal('');
 
