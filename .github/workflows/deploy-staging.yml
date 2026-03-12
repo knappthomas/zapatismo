@@ -58,10 +58,10 @@ jobs:
             set -e
             cd "$STAGING_DEPLOY_PATH"
             export REGISTRY_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository_owner }}"
-            docker compose -f docker-compose.staging.yml pull
-            docker compose -f docker-compose.staging.yml up -d
-            docker compose -f docker-compose.staging.yml exec -T backend-staging npx prisma migrate reset --force
-            docker compose -f docker-compose.staging.yml exec -T backend-staging npx ts-node prisma/seed.ts
+            docker compose -f docker-compose.staging.yml --env-file .env.staging pull
+            docker compose -f docker-compose.staging.yml --env-file .env.staging up -d
+            docker compose -f docker-compose.staging.yml --env-file .env.staging exec -T backend-staging npx prisma migrate reset --force
+            docker compose -f docker-compose.staging.yml --env-file .env.staging exec -T backend-staging npx ts-node prisma/seed.ts
         env:
           REGISTRY_IMAGE_PREFIX: ${{ env.REGISTRY }}/${{ github.repository_owner }}
           STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}

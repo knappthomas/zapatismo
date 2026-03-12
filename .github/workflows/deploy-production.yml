@@ -58,9 +58,9 @@ jobs:
             set -e
             cd "$PROD_DEPLOY_PATH"
             export REGISTRY_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository_owner }}"
-            docker compose -f docker-compose.production.yml pull
-            docker compose -f docker-compose.production.yml up -d
-            docker compose -f docker-compose.production.yml exec -T backend-prod npx prisma migrate deploy
+            docker compose -f docker-compose.production.yml --env-file .env.production pull
+            docker compose -f docker-compose.production.yml --env-file .env.production up -d
+            docker compose -f docker-compose.production.yml --env-file .env.production exec -T backend-prod npx prisma migrate deploy
         env:
           REGISTRY_IMAGE_PREFIX: ${{ env.REGISTRY }}/${{ github.repository_owner }}
           PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
