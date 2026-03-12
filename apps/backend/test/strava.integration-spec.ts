@@ -162,7 +162,7 @@ describe('Strava integration (DB)', () => {
     expect(lastSync.lastSyncAt).toBeNull();
   });
 
-  it('sync with default shoe set assigns created workout to default shoe', async () => {
+  it('sync with default running shoe set assigns running workout to that shoe', async () => {
     const user = await prisma.user.findUnique({ where: { email: THOMAS_EMAIL } });
     if (!user) throw new Error(`Requires user ${THOMAS_EMAIL}; run test-migrations first`);
 
@@ -181,9 +181,9 @@ describe('Strava integration (DB)', () => {
       update: {},
     });
 
-    await shoesService.update(shoe.id, user.id, { isDefault: true });
-    const defaultId = await shoesService.findDefaultShoeId(user.id);
-    expect(defaultId).toBe(shoe.id);
+    await shoesService.update(shoe.id, user.id, { isDefaultForRunning: true });
+    expect(await shoesService.findDefaultRunningShoeId(user.id)).toBe(shoe.id);
+    expect(await shoesService.findDefaultWalkingShoeId(user.id)).toBeNull();
 
     fetchMock.mockImplementation((url: string) => {
       if (url.includes('athlete/activities')) {
@@ -215,17 +215,132 @@ describe('Strava integration (DB)', () => {
     expect(workout).toBeDefined();
     expect(workout?.shoeId).toBe(shoe.id);
 
-    await shoesService.update(shoe.id, user.id, { isDefault: false });
+    await shoesService.update(shoe.id, user.id, { isDefaultForRunning: false });
     await prisma.workout.deleteMany({ where: { userId: user.id, externalId: '777' } });
   });
 
-  it('sync with no default shoe creates workout with shoeId null', async () => {
+  it('sync with default walking shoe only: walking workout gets shoe, running has no shoe', async () => {
+    const user = await prisma.user.findUnique({ where: { email: THOMAS_EMAIL } });
+    if (!user) throw new Error(`Requires user ${THOMAS_EMAIL}; run test-migrations first`);
+
+    const shoe = await prisma.shoe.findFirst({ where: { userId: user.id } });
+    if (!shoe) throw new Error('Need at least one shoe for thomas from test-migrations');
+
+    await prisma.stravaConnection.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        stravaAthleteId: '999',
+        refreshToken: 'rt',
+        accessToken: 'at',
+        expiresAt: new Date(Date.now() + 3600 * 1000),
+      },
+      update: {},
+    });
+
+    await prisma.shoe.updateMany({
+      where: { userId: user.id },
+      data: { isDefaultForRunning: false, isDefaultForWalking: false },
+    });
+    await shoesService.update(shoe.id, user.id, { isDefaultForWalking: true });
+    expect(await shoesService.findDefaultWalkingShoeId(user.id)).toBe(shoe.id);
+    expect(await shoesService.findDefaultRunningShoeId(user.id)).toBeNull();
+
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('athlete/activities')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify([
+              { id: 778, type: 'Run', name: 'Run', distance: 4000, moving_time: 1200, start_date: '2025-02-19T09:00:00Z' },
+              { id: 779, type: 'Walk', name: 'Walk', distance: 1500, moving_time: 500, start_date: '2025-02-19T10:00:00Z' },
+            ]),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+
+    const result = await stravaService.sync(user.id, '2025-02-01');
+    expect(result.imported).toBe(2);
+
+    const runWorkout = await prisma.workout.findFirst({ where: { userId: user.id, externalId: '778' } });
+    const walkWorkout = await prisma.workout.findFirst({ where: { userId: user.id, externalId: '779' } });
+    expect(runWorkout?.shoeId).toBeNull();
+    expect(walkWorkout?.shoeId).toBe(shoe.id);
+
+    await shoesService.update(shoe.id, user.id, { isDefaultForWalking: false });
+    await prisma.workout.deleteMany({ where: { userId: user.id, externalId: { in: ['778', '779'] } } });
+  });
+
+  it('sync with both default running and walking shoes: each type gets correct shoe', async () => {
+    const user = await prisma.user.findUnique({ where: { email: THOMAS_EMAIL } });
+    if (!user) throw new Error(`Requires user ${THOMAS_EMAIL}; run test-migrations first`);
+
+    let shoes = await shoesService.findAll(user.id);
+    if (shoes.length < 2) {
+      await shoesService.create(user.id, {
+        photoUrl: 'https://example.com/walk-shoe.jpg',
+        brandName: 'WalkBrand',
+        shoeName: 'Walk Shoe',
+        buyingDate: '2025-02-01',
+        kilometerTarget: 400,
+      });
+      shoes = await shoesService.findAll(user.id);
+    }
+    const [runningShoe, walkingShoe] = shoes.slice(0, 2);
+    await shoesService.update(runningShoe.id, user.id, { isDefaultForRunning: true });
+    await shoesService.update(walkingShoe.id, user.id, { isDefaultForWalking: true });
+    expect(await shoesService.findDefaultRunningShoeId(user.id)).toBe(runningShoe.id);
+    expect(await shoesService.findDefaultWalkingShoeId(user.id)).toBe(walkingShoe.id);
+
+    await prisma.stravaConnection.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        stravaAthleteId: '999',
+        refreshToken: 'rt',
+        accessToken: 'at',
+        expiresAt: new Date(Date.now() + 3600 * 1000),
+      },
+      update: {},
+    });
+
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('athlete/activities')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify([
+              { id: 780, type: 'Run', name: 'Run', distance: 5000, moving_time: 1800, start_date: '2025-02-19T11:00:00Z' },
+              { id: 781, type: 'Walk', name: 'Walk', distance: 2000, moving_time: 600, start_date: '2025-02-19T12:00:00Z' },
+            ]),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+
+    const result = await stravaService.sync(user.id, '2025-02-01');
+    expect(result.imported).toBe(2);
+
+    const runWorkout = await prisma.workout.findFirst({ where: { userId: user.id, externalId: '780' } });
+    const walkWorkout = await prisma.workout.findFirst({ where: { userId: user.id, externalId: '781' } });
+    expect(runWorkout?.shoeId).toBe(runningShoe.id);
+    expect(walkWorkout?.shoeId).toBe(walkingShoe.id);
+
+    await shoesService.update(runningShoe.id, user.id, { isDefaultForRunning: false });
+    await shoesService.update(walkingShoe.id, user.id, { isDefaultForWalking: false });
+    await prisma.workout.deleteMany({ where: { userId: user.id, externalId: { in: ['780', '781'] } } });
+  });
+
+  it('sync with no default walking shoe: walking workout created with shoeId null', async () => {
     const user = await prisma.user.findUnique({ where: { email: THOMAS_EMAIL } });
     if (!user) throw new Error(`Requires user ${THOMAS_EMAIL}; run test-migrations first`);
 
     await prisma.shoe.updateMany({
       where: { userId: user.id },
-      data: { isDefault: false },
+      data: { isDefaultForRunning: false, isDefaultForWalking: false },
     });
     await prisma.stravaConnection.upsert({
       where: { userId: user.id },
@@ -317,7 +432,7 @@ describe('Strava integration (DB)', () => {
     });
     expect(w?.shoeId).toBeNull();
 
-    await shoesService.update(shoe.id, user.id, { isDefault: true });
+    await shoesService.update(shoe.id, user.id, { isDefaultForRunning: true });
     const r2 = await stravaService.sync(user.id, '2025-02-01');
     expect(r2.imported).toBe(0);
     const w2 = await prisma.workout.findFirst({
@@ -325,7 +440,7 @@ describe('Strava integration (DB)', () => {
     });
     expect(w2?.shoeId).toBeNull();
 
-    await shoesService.update(shoe.id, user.id, { isDefault: false });
+    await shoesService.update(shoe.id, user.id, { isDefaultForRunning: false });
     await prisma.workout.deleteMany({ where: { userId: user.id, externalId: '555' } });
   });
 });

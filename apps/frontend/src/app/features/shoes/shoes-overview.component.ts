@@ -70,7 +70,7 @@ type ViewMode = 'grid' | 'list';
                   <th>Photo</th>
                   <th>Name</th>
                   <th>Brand</th>
-                  <th>Default</th>
+                  <th>Defaults</th>
                   <th>Buying date</th>
                   <th>Location</th>
                   <th>Km target</th>
@@ -86,11 +86,17 @@ type ViewMode = 'grid' | 'list';
                     <td>{{ shoe.shoeName }}</td>
                     <td>{{ shoe.brandName }}</td>
                     <td>
-                      @if (shoe.isDefault) {
-                        <span class="badge badge-primary badge-sm" data-cy="shoe-default-badge">Default</span>
-                      } @else {
-                        <span class="text-base-content/50">—</span>
-                      }
+                      <div class="flex flex-wrap gap-1">
+                        @if (shoe.isDefaultForRunning) {
+                          <span class="badge badge-primary badge-sm" data-cy="shoe-default-running-badge">Default Running</span>
+                        }
+                        @if (shoe.isDefaultForWalking) {
+                          <span class="badge badge-secondary badge-sm" data-cy="shoe-default-walking-badge">Default Walking</span>
+                        }
+                        @if (!shoe.isDefaultForRunning && !shoe.isDefaultForWalking) {
+                          <span class="text-base-content/50">—</span>
+                        }
+                      </div>
                     </td>
                     <td>{{ shoe.buyingDate | date: 'mediumDate' }}</td>
                     <td>{{ shoe.buyingLocation ?? '—' }}</td>

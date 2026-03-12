@@ -29,8 +29,12 @@ export class WorkoutsOverviewPO extends MainPO {
     return this.root.find('[data-cy="sync-strava-modal"]');
   }
 
-  get syncNoDefaultShoeWarning() {
-    return this.root.find('[data-cy="sync-no-default-shoe-warning"]');
+  get syncNoDefaultRunningShoeWarning() {
+    return this.root.find('[data-cy="sync-no-default-running-shoe-warning"]');
+  }
+
+  get syncNoDefaultWalkingShoeWarning() {
+    return this.root.find('[data-cy="sync-no-default-walking-shoe-warning"]');
   }
 
   get syncFromDateInput() {

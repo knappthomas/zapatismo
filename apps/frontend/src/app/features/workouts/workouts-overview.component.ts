@@ -66,9 +66,14 @@ function defaultFromDate(): string {
             <p class="text-sm text-base-content/70 py-2">
               Import running and walking activities from this date until now.
             </p>
-            @if (syncModalShoesLoaded() && !syncModalHasDefaultShoe()) {
-              <div role="alert" class="alert alert-warning my-2" data-cy="sync-no-default-shoe-warning">
-                <span>You don't have a default shoe set. Synced workouts will not be assigned to a shoe. You can set a default in Shoes.</span>
+            @if (syncModalShoesLoaded() && !syncModalHasDefaultRunningShoe()) {
+              <div role="alert" class="alert alert-warning my-2" data-cy="sync-no-default-running-shoe-warning">
+                <span>No default running shoe set; synced running workouts will not be assigned to a shoe.</span>
+              </div>
+            }
+            @if (syncModalShoesLoaded() && !syncModalHasDefaultWalkingShoe()) {
+              <div role="alert" class="alert alert-warning my-2" data-cy="sync-no-default-walking-shoe-warning">
+                <span>No default walking shoe set; synced walking workouts will not be assigned to a shoe.</span>
               </div>
             }
             <div class="form-control py-2">
@@ -233,9 +238,10 @@ export class WorkoutsOverviewComponent implements OnInit {
   protected readonly syncLoading = signal(false);
   protected readonly syncResult = signal<string | null>(null);
   protected readonly syncError = signal('');
-  /** Set when shoes have been loaded in sync modal; used to show "no default shoe" warning. */
+  /** Set when shoes have been loaded in sync modal; used to show "no default" warnings. */
   protected readonly syncModalShoesLoaded = signal(false);
-  protected readonly syncModalHasDefaultShoe = signal(false);
+  protected readonly syncModalHasDefaultRunningShoe = signal(false);
+  protected readonly syncModalHasDefaultWalkingShoe = signal(false);
 
   ngOnInit(): void {
     this.loadWorkouts();
@@ -259,7 +265,8 @@ export class WorkoutsOverviewComponent implements OnInit {
     this.syncResult.set(null);
     this.syncError.set('');
     this.syncModalShoesLoaded.set(false);
-    this.syncModalHasDefaultShoe.set(false);
+    this.syncModalHasDefaultRunningShoe.set(false);
+    this.syncModalHasDefaultWalkingShoe.set(false);
     this.stravaService.getLastSync().subscribe({
       next: (res) => {
         if (res.lastSyncAt) {
@@ -275,11 +282,13 @@ export class WorkoutsOverviewComponent implements OnInit {
     this.shoesService.getList().subscribe({
       next: (shoes) => {
         this.syncModalShoesLoaded.set(true);
-        this.syncModalHasDefaultShoe.set(shoes.some((s) => s.isDefault));
+        this.syncModalHasDefaultRunningShoe.set(shoes.some((s) => s.isDefaultForRunning));
+        this.syncModalHasDefaultWalkingShoe.set(shoes.some((s) => s.isDefaultForWalking));
       },
       error: () => {
         this.syncModalShoesLoaded.set(true);
-        this.syncModalHasDefaultShoe.set(false);
+        this.syncModalHasDefaultRunningShoe.set(false);
+        this.syncModalHasDefaultWalkingShoe.set(false);
       },
     });
   }
@@ -289,7 +298,8 @@ export class WorkoutsOverviewComponent implements OnInit {
     this.syncResult.set(null);
     this.syncError.set('');
     this.syncModalShoesLoaded.set(false);
-    this.syncModalHasDefaultShoe.set(false);
+    this.syncModalHasDefaultRunningShoe.set(false);
+    this.syncModalHasDefaultWalkingShoe.set(false);
   }
 
   protected onSyncFromDateChange(event: Event): void {

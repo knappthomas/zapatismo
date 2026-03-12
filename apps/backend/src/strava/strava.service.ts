@@ -173,7 +173,10 @@ export class StravaService {
     const after = Math.floor(from.getTime() / 1000);
     const before = Math.floor(Date.now() / 1000);
 
-    const defaultShoeId = await this.shoesService.findDefaultShoeId(userId);
+    const [defaultRunningShoeId, defaultWalkingShoeId] = await Promise.all([
+      this.shoesService.findDefaultRunningShoeId(userId),
+      this.shoesService.findDefaultWalkingShoeId(userId),
+    ]);
 
     const activities = await this.fetchActivities(accessToken, after, before);
     let imported = 0;
@@ -185,6 +188,13 @@ export class StravaService {
         skipped += 1;
         continue;
       }
+
+      const shoeId =
+        workoutType === WorkoutType.RUNNING
+          ? defaultRunningShoeId
+          : workoutType === WorkoutType.WALKING
+            ? defaultWalkingShoeId
+            : null;
 
       const startTime = new Date(act.start_date);
       const endTime = new Date(startTime.getTime() + act.moving_time * 1000);
@@ -199,7 +209,7 @@ export class StravaService {
         steps: 0,
         distanceKm,
         location,
-        shoeId: defaultShoeId ?? undefined,
+        shoeId: shoeId ?? undefined,
       });
       if (result.created) {
         imported += 1;

@@ -44,7 +44,8 @@ describe('ShoesService (unit)', () => {
     buyingDate: new Date('2024-01-15'),
     buyingLocation: 'Berlin',
     kilometerTarget: 800,
-    isDefault: false,
+    isDefaultForRunning: false,
+    isDefaultForWalking: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -280,62 +281,133 @@ describe('ShoesService (unit)', () => {
       }
     });
 
-    it('when isDefault true, clears other shoes default then sets this shoe as default', async () => {
+    it('when isDefaultForRunning true, clears other shoes default-for-running then sets this shoe', async () => {
       mockPrisma.shoe.findFirst.mockResolvedValue(shoeEntity);
       mockPrisma.shoe.updateMany.mockResolvedValue({ count: 1 });
-      const updated = { ...shoeEntity, isDefault: true };
+      const updated = { ...shoeEntity, isDefaultForRunning: true, isDefaultForWalking: false };
       mockPrisma.shoe.update.mockResolvedValue(updated);
       mockPrisma.workout.aggregate.mockResolvedValue({
         _sum: { steps: 0, distanceKm: 0 },
       });
 
-      const result = await service.update(1, userId, { isDefault: true });
+      const result = await service.update(1, userId, { isDefaultForRunning: true });
 
       expect(prisma.shoe.updateMany).toHaveBeenCalledWith({
         where: { userId: 1, id: { not: 1 } },
-        data: { isDefault: false },
+        data: { isDefaultForRunning: false },
       });
       const updateCall = (prisma.shoe.update as jest.Mock).mock.calls[0][0];
       expect(updateCall.where).toEqual({ id: 1 });
-      expect(updateCall.data.isDefault).toBe(true);
-      expect(result.isDefault).toBe(true);
+      expect(updateCall.data.isDefaultForRunning).toBe(true);
+      expect(result.isDefaultForRunning).toBe(true);
     });
 
-    it('when isDefault false, only updates this shoe to non-default', async () => {
-      const defaultShoe = { ...shoeEntity, isDefault: true };
-      mockPrisma.shoe.findFirst.mockResolvedValue(defaultShoe);
-      const updated = { ...defaultShoe, isDefault: false };
+    it('when isDefaultForWalking true, clears other shoes default-for-walking then sets this shoe', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue(shoeEntity);
+      mockPrisma.shoe.updateMany.mockResolvedValue({ count: 1 });
+      const updated = { ...shoeEntity, isDefaultForRunning: false, isDefaultForWalking: true };
       mockPrisma.shoe.update.mockResolvedValue(updated);
       mockPrisma.workout.aggregate.mockResolvedValue({
         _sum: { steps: 0, distanceKm: 0 },
       });
 
-      const result = await service.update(1, userId, { isDefault: false });
+      const result = await service.update(1, userId, { isDefaultForWalking: true });
+
+      expect(prisma.shoe.updateMany).toHaveBeenCalledWith({
+        where: { userId: 1, id: { not: 1 } },
+        data: { isDefaultForWalking: false },
+      });
+      expect(result.isDefaultForWalking).toBe(true);
+    });
+
+    it('when both isDefaultForRunning and isDefaultForWalking true, clears both on other shoes then sets this shoe', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue(shoeEntity);
+      mockPrisma.shoe.updateMany.mockResolvedValue({ count: 2 });
+      const updated = {
+        ...shoeEntity,
+        isDefaultForRunning: true,
+        isDefaultForWalking: true,
+      };
+      mockPrisma.shoe.update.mockResolvedValue(updated);
+      mockPrisma.workout.aggregate.mockResolvedValue({
+        _sum: { steps: 0, distanceKm: 0 },
+      });
+
+      const result = await service.update(1, userId, {
+        isDefaultForRunning: true,
+        isDefaultForWalking: true,
+      });
+
+      expect(prisma.shoe.updateMany).toHaveBeenCalledTimes(2);
+      expect(prisma.shoe.updateMany).toHaveBeenCalledWith({
+        where: { userId: 1, id: { not: 1 } },
+        data: { isDefaultForRunning: false },
+      });
+      expect(prisma.shoe.updateMany).toHaveBeenCalledWith({
+        where: { userId: 1, id: { not: 1 } },
+        data: { isDefaultForWalking: false },
+      });
+      expect(result.isDefaultForRunning).toBe(true);
+      expect(result.isDefaultForWalking).toBe(true);
+    });
+
+    it('when isDefaultForRunning false, only updates this shoe to non-default running', async () => {
+      const defaultShoe = { ...shoeEntity, isDefaultForRunning: true, isDefaultForWalking: false };
+      mockPrisma.shoe.findFirst.mockResolvedValue(defaultShoe);
+      const updated = { ...defaultShoe, isDefaultForRunning: false };
+      mockPrisma.shoe.update.mockResolvedValue(updated);
+      mockPrisma.workout.aggregate.mockResolvedValue({
+        _sum: { steps: 0, distanceKm: 0 },
+      });
+
+      const result = await service.update(1, userId, { isDefaultForRunning: false });
 
       expect(prisma.shoe.updateMany).not.toHaveBeenCalled();
       const updateCall = (prisma.shoe.update as jest.Mock).mock.calls[0][0];
-      expect(updateCall.data.isDefault).toBe(false);
-      expect(result.isDefault).toBe(false);
+      expect(updateCall.data.isDefaultForRunning).toBe(false);
+      expect(result.isDefaultForRunning).toBe(false);
     });
   });
 
-  describe('findDefaultShoeId', () => {
-    it('returns shoe id when user has a default shoe', async () => {
+  describe('findDefaultRunningShoeId', () => {
+    it('returns shoe id when user has a default running shoe', async () => {
       mockPrisma.shoe.findFirst.mockResolvedValue({ id: 5 });
 
-      const result = await service.findDefaultShoeId(userId);
+      const result = await service.findDefaultRunningShoeId(userId);
 
       expect(prisma.shoe.findFirst).toHaveBeenCalledWith({
-        where: { userId: 1, isDefault: true },
+        where: { userId: 1, isDefaultForRunning: true },
         select: { id: true },
       });
       expect(result).toBe(5);
     });
 
-    it('returns null when user has no default shoe', async () => {
+    it('returns null when user has no default running shoe', async () => {
       mockPrisma.shoe.findFirst.mockResolvedValue(null);
 
-      const result = await service.findDefaultShoeId(userId);
+      const result = await service.findDefaultRunningShoeId(userId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('findDefaultWalkingShoeId', () => {
+    it('returns shoe id when user has a default walking shoe', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue({ id: 7 });
+
+      const result = await service.findDefaultWalkingShoeId(userId);
+
+      expect(prisma.shoe.findFirst).toHaveBeenCalledWith({
+        where: { userId: 1, isDefaultForWalking: true },
+        select: { id: true },
+      });
+      expect(result).toBe(7);
+    });
+
+    it('returns null when user has no default walking shoe', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue(null);
+
+      const result = await service.findDefaultWalkingShoeId(userId);
 
       expect(result).toBeNull();
     });

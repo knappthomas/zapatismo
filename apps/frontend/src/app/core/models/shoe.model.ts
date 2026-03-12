@@ -12,8 +12,10 @@ export interface Shoe {
   totalSteps: number;
   /** Total distance (km) from all workouts linked to this shoe. */
   totalDistanceKm: number;
-  /** Whether this shoe is the user's default for Strava sync (at most one per user). */
-  isDefault: boolean;
+  /** Whether this shoe is the user's default for running (Strava sync assigns new running workouts to it). At most one per user. */
+  isDefaultForRunning: boolean;
+  /** Whether this shoe is the user's default for walking (Strava sync assigns new walking workouts to it). At most one per user. */
+  isDefaultForWalking: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,5 +30,8 @@ export interface CreateShoePayload {
   kilometerTarget: number;
 }
 
-/** Payload for update; partial of create plus optional isDefault. */
-export type UpdateShoePayload = Partial<CreateShoePayload> & { isDefault?: boolean };
+/** Payload for update; partial of create plus optional default flags. */
+export type UpdateShoePayload = Partial<CreateShoePayload> & {
+  isDefaultForRunning?: boolean;
+  isDefaultForWalking?: boolean;
+};
