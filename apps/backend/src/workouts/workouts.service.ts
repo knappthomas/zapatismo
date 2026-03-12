@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { WorkoutType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { BulkAssignShoeDto } from './dto/bulk-assign-shoe.dto';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { WorkoutResponseDto } from './dto/workout-response.dto';
 import { UpdateWorkoutDto } from './dto/update-workout.dto';
@@ -102,6 +103,41 @@ export class WorkoutsService {
       throw new NotFoundException(`Workout with id ${id} not found`);
     }
     await this.prisma.workout.delete({ where: { id } });
+  }
+
+  /**
+   * Assign one shoe to many workouts (current user's). All workout IDs must belong to the user;
+   * shoe must belong to the user. Returns the updated workouts.
+   */
+  async bulkAssignShoe(
+    userId: number,
+    dto: BulkAssignShoeDto,
+  ): Promise<WorkoutResponseDto[]> {
+    if (dto.workoutIds.length === 0) {
+      throw new BadRequestException('At least one workout id is required');
+    }
+    await this.ensureShoeBelongsToUser(dto.shoeId, userId);
+
+    const found = await this.prisma.workout.findMany({
+      where: { id: { in: dto.workoutIds }, userId },
+    });
+    if (found.length !== dto.workoutIds.length) {
+      throw new NotFoundException(
+        'One or more workouts not found or do not belong to user',
+      );
+    }
+
+    await this.prisma.workout.updateMany({
+      where: { id: { in: dto.workoutIds }, userId },
+      data: { shoeId: dto.shoeId },
+    });
+
+    const workouts = await this.prisma.workout.findMany({
+      where: { id: { in: dto.workoutIds }, userId },
+      orderBy: { id: 'asc' },
+      include: { shoe: { select: { id: true, brandName: true, shoeName: true } } },
+    });
+    return workouts.map((w) => this.toResponse(w));
   }
 
   /**
