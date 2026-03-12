@@ -15,7 +15,6 @@
     "test:integration": "jest --testPathPattern=integration-spec --runInBand"
   },
   "dependencies": {
-    "@zapatismo/validation-constants": "*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",

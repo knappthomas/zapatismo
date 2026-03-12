@@ -25,7 +25,6 @@
   },
   "private": true,
   "dependencies": {
-    "@zapatismo/validation-constants": "*",
     "@angular/common": "^20.3.0",
     "@angular/compiler": "^20.3.0",
     "@angular/core": "^20.3.0",

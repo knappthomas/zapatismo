@@ -3,9 +3,10 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { PASSWORD_MIN_LENGTH } from '@zapatismo/validation-constants';
 import { UsersService } from '../../core/services/users.service';
 import { Role } from '../../core/models/user.model';
+
+const PASSWORD_MIN_LENGTH = 8;
 
 @Component({
   selector: 'app-user-create',
