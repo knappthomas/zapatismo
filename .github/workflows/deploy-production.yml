@@ -1,0 +1,65 @@
+# Deploy production on push to branch `main`.
+# Builds backend and frontend images, pushes to ghcr.io, deploys via SSH, runs migrate deploy only (no reset/seed).
+# Secrets: PROD_SSH_KEY, PROD_SSH_HOST, PROD_SSH_USER, PROD_DEPLOY_PATH.
+
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/zapatismo-backend:latest
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/frontend
+          file: apps/frontend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/zapatismo-frontend:latest
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: REGISTRY_IMAGE_PREFIX,PROD_DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -e
+            cd "$PROD_DEPLOY_PATH"
+            export REGISTRY_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository_owner }}"
+            docker compose -f docker-compose.production.yml pull
+            docker compose -f docker-compose.production.yml up -d
+            docker compose -f docker-compose.production.yml exec -T backend-prod npx prisma migrate deploy
+        env:
+          REGISTRY_IMAGE_PREFIX: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
