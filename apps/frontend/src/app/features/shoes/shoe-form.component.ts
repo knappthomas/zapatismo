@@ -118,20 +118,36 @@ const MAX_KM_TARGET = 100000;
           </label>
 
           @if (isEdit()) {
-            <label class="form-control w-full mb-6">
-              <div class="label">
-                <input
-                  type="checkbox"
-                  formControlName="isDefault"
-                  class="checkbox checkbox-primary"
-                  data-cy="shoe-is-default"
-                />
-                <span class="label-text">Default shoe for Strava sync</span>
-              </div>
-              <span class="label text-base-content/70 text-sm"
-                >Newly imported workouts will be assigned to this shoe when it is default.</span
-              >
-            </label>
+            <div class="space-y-4 mb-6">
+              <label class="form-control w-full">
+                <div class="label">
+                  <input
+                    type="checkbox"
+                    formControlName="isDefaultForRunning"
+                    class="checkbox checkbox-primary"
+                    data-cy="shoe-is-default-running"
+                  />
+                  <span class="label-text">Default for running</span>
+                </div>
+                <span class="label text-base-content/70 text-sm"
+                  >Newly imported running workouts will be assigned to this shoe when set.</span
+                >
+              </label>
+              <label class="form-control w-full">
+                <div class="label">
+                  <input
+                    type="checkbox"
+                    formControlName="isDefaultForWalking"
+                    class="checkbox checkbox-primary"
+                    data-cy="shoe-is-default-walking"
+                  />
+                  <span class="label-text">Default for walking</span>
+                </div>
+                <span class="label text-base-content/70 text-sm"
+                  >Newly imported walking workouts will be assigned to this shoe when set.</span
+                >
+              </label>
+            </div>
           }
 
           <div class="flex gap-2">
@@ -166,7 +182,8 @@ export class ShoeFormComponent implements OnInit {
     buyingDate: ['', Validators.required],
     buyingLocation: [''],
     kilometerTarget: [0, [Validators.required, Validators.min(0), Validators.max(MAX_KM_TARGET)]],
-    isDefault: [false],
+    isDefaultForRunning: [false],
+    isDefaultForWalking: [false],
   });
 
   protected readonly isEdit = computed(() => !!this.shoeId());
@@ -188,7 +205,8 @@ export class ShoeFormComponent implements OnInit {
               buyingDate: shoe.buyingDate.toString().slice(0, 10),
               buyingLocation: shoe.buyingLocation ?? '',
               kilometerTarget: shoe.kilometerTarget,
-              isDefault: shoe.isDefault,
+              isDefaultForRunning: shoe.isDefaultForRunning,
+              isDefaultForWalking: shoe.isDefaultForWalking,
             });
           },
           error: () => {
@@ -217,7 +235,11 @@ export class ShoeFormComponent implements OnInit {
 
     const id = this.shoeId();
     if (id !== null) {
-      const payload = { ...basePayload, isDefault: raw.isDefault };
+      const payload = {
+        ...basePayload,
+        isDefaultForRunning: raw.isDefaultForRunning,
+        isDefaultForWalking: raw.isDefaultForWalking,
+      };
       this.shoesService.update(id, payload).subscribe({
         next: () => {
           this.saving.set(false);

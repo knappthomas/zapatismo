@@ -79,31 +79,34 @@ describe('Shoes', () => {
         overviewPO.shoeTotalSteps.should('not.exist');
       });
 
-      it('overview shows default badge when list has one default shoe', () => {
+      it('overview shows default badges when list has one default shoe (running and walking)', () => {
         cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded-with-default.json' });
         cy.visit('/shoes');
-        overviewPO.defaultBadges.should('have.length', 1).and('contain', 'Default');
+        overviewPO.defaultRunningBadges.should('have.length', 1).and('contain', 'Default Running');
+        overviewPO.defaultWalkingBadges.should('have.length', 1).and('contain', 'Default Walking');
       });
 
-      it('edit shoe set as default then overview shows default badge', () => {
+      it('edit shoe set as default for running then overview shows default running badge', () => {
         cy.intercept('GET', '**/api/shoes/1', { fixture: 'shoes/shoe-1-no-default.json' });
         cy.intercept('PATCH', '**/api/shoes/1', { statusCode: 200, fixture: 'shoes/shoe-1-with-default.json' });
         cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded-with-default.json' });
         cy.visit('/shoes/1/edit');
-        formPO.defaultCheckbox.should('be.visible').and('not.be.checked');
-        formPO.defaultCheckbox.check();
+        formPO.defaultRunningCheckbox.should('be.visible').and('not.be.checked');
+        formPO.defaultRunningCheckbox.check();
         formPO.submitButton.click();
         cy.url().should('include', '/shoes');
-        overviewPO.defaultBadges.should('have.length', 1).and('contain', 'Default');
+        overviewPO.defaultRunningBadges.should('have.length', 1).and('contain', 'Default Running');
       });
 
-      it('edit shoe clear default then overview shows no default badge', () => {
+      it('edit shoe clear defaults then overview shows no default badge', () => {
         cy.intercept('GET', '**/api/shoes/1', { fixture: 'shoes/shoe-1-with-default.json' });
         cy.intercept('PATCH', '**/api/shoes/1', { statusCode: 200, fixture: 'shoes/shoe-1-no-default.json' });
         cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
         cy.visit('/shoes/1/edit');
-        formPO.defaultCheckbox.should('be.visible').and('be.checked');
-        formPO.defaultCheckbox.uncheck();
+        formPO.defaultRunningCheckbox.should('be.visible').and('be.checked');
+        formPO.defaultWalkingCheckbox.should('be.visible').and('be.checked');
+        formPO.defaultRunningCheckbox.uncheck();
+        formPO.defaultWalkingCheckbox.uncheck();
         formPO.submitButton.click();
         cy.url().should('include', '/shoes');
         overviewPO.defaultBadges.should('have.length', 0);

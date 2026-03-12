@@ -81,10 +81,16 @@ export class ShoesService {
     if (!existing) {
       throw new NotFoundException(`Shoe with id ${id} not found`);
     }
-    if (dto.isDefault === true) {
+    if (dto.isDefaultForRunning === true) {
       await this.prisma.shoe.updateMany({
         where: { userId, id: { not: id } },
-        data: { isDefault: false },
+        data: { isDefaultForRunning: false },
+      });
+    }
+    if (dto.isDefaultForWalking === true) {
+      await this.prisma.shoe.updateMany({
+        where: { userId, id: { not: id } },
+        data: { isDefaultForWalking: false },
       });
     }
     const shoe = await this.prisma.shoe.update({
@@ -102,7 +108,12 @@ export class ShoesService {
         ...(dto.kilometerTarget !== undefined && {
           kilometerTarget: dto.kilometerTarget,
         }),
-        ...(dto.isDefault !== undefined && { isDefault: dto.isDefault }),
+        ...(dto.isDefaultForRunning !== undefined && {
+          isDefaultForRunning: dto.isDefaultForRunning,
+        }),
+        ...(dto.isDefaultForWalking !== undefined && {
+          isDefaultForWalking: dto.isDefaultForWalking,
+        }),
       },
     });
     const agg = await this.prisma.workout.aggregate({
@@ -116,12 +127,24 @@ export class ShoesService {
   }
 
   /**
-   * Returns the id of the user's default shoe, or null if none is set.
-   * Used by Strava sync to assign newly imported workouts to the default shoe.
+   * Returns the id of the user's default running shoe, or null if none is set.
+   * Used by Strava sync to assign newly imported running workouts.
    */
-  async findDefaultShoeId(userId: number): Promise<number | null> {
+  async findDefaultRunningShoeId(userId: number): Promise<number | null> {
     const shoe = await this.prisma.shoe.findFirst({
-      where: { userId, isDefault: true },
+      where: { userId, isDefaultForRunning: true },
+      select: { id: true },
+    });
+    return shoe?.id ?? null;
+  }
+
+  /**
+   * Returns the id of the user's default walking shoe, or null if none is set.
+   * Used by Strava sync to assign newly imported walking workouts.
+   */
+  async findDefaultWalkingShoeId(userId: number): Promise<number | null> {
+    const shoe = await this.prisma.shoe.findFirst({
+      where: { userId, isDefaultForWalking: true },
       select: { id: true },
     });
     return shoe?.id ?? null;
@@ -155,7 +178,8 @@ export class ShoesService {
       buyingDate: Date;
       buyingLocation: string | null;
       kilometerTarget: number;
-      isDefault: boolean;
+      isDefaultForRunning: boolean;
+      isDefaultForWalking: boolean;
       createdAt: Date;
       updatedAt: Date;
     },
@@ -172,7 +196,8 @@ export class ShoesService {
       kilometerTarget: shoe.kilometerTarget,
       totalSteps: totals.totalSteps,
       totalDistanceKm: totals.totalDistanceKm,
-      isDefault: shoe.isDefault,
+      isDefaultForRunning: shoe.isDefaultForRunning,
+      isDefaultForWalking: shoe.isDefaultForWalking,
       createdAt: shoe.createdAt,
       updatedAt: shoe.updatedAt,
     };

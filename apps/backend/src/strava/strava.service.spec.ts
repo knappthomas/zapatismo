@@ -47,7 +47,8 @@ describe('StravaService (unit)', () => {
   };
 
   const mockShoesService = {
-    findDefaultShoeId: jest.fn(),
+    findDefaultRunningShoeId: jest.fn(),
+    findDefaultWalkingShoeId: jest.fn(),
   };
 
   const mockWorkoutsService = {
@@ -56,7 +57,8 @@ describe('StravaService (unit)', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockShoesService.findDefaultShoeId.mockResolvedValue(null);
+    mockShoesService.findDefaultRunningShoeId.mockResolvedValue(null);
+    mockShoesService.findDefaultWalkingShoeId.mockResolvedValue(null);
     fetchMock = jest.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve(new Response()));
 
     const module: TestingModule = await Test.createTestingModule({
@@ -207,28 +209,25 @@ describe('StravaService (unit)', () => {
       expect(createCall[1].distanceKm).toBe(5);
       expect(createCall[1].location).toBe('Morning Run');
       expect(createCall[1].shoeId).toBeUndefined();
+      expect(mockShoesService.findDefaultRunningShoeId).toHaveBeenCalledWith(1);
+      expect(mockShoesService.findDefaultWalkingShoeId).toHaveBeenCalledWith(1);
       expect(prisma.user.update).toHaveBeenCalledTimes(1);
       const updateCall = (prisma.user.update as jest.Mock).mock.calls[0][0];
       expect(updateCall.where).toEqual({ id: 1 });
       expect(updateCall.data.lastStravaSyncAt).toBeInstanceOf(Date);
     });
 
-    it('when user has default shoe, passes shoeId to createByExternalId for new workouts', async () => {
+    it('when user has default running shoe only, RUNNING workout gets that shoeId, WALKING gets undefined', async () => {
       mockPrisma.stravaConnection.findUnique.mockResolvedValue(conn);
       mockPrisma.user.update.mockResolvedValue({});
-      mockShoesService.findDefaultShoeId.mockResolvedValue(42);
+      mockShoesService.findDefaultRunningShoeId.mockResolvedValue(42);
+      mockShoesService.findDefaultWalkingShoeId.mockResolvedValue(null);
       mockWorkoutsService.createByExternalId.mockResolvedValue({ created: true });
       fetchMock.mockResolvedValueOnce(
         new Response(
           JSON.stringify([
-            {
-              id: 101,
-              type: 'Run',
-              name: 'Run',
-              distance: 3000,
-              moving_time: 900,
-              start_date: '2025-02-16T08:00:00Z',
-            },
+            { id: 101, type: 'Run', name: 'Run', distance: 3000, moving_time: 900, start_date: '2025-02-16T08:00:00Z' },
+            { id: 102, type: 'Walk', name: 'Walk', distance: 2000, moving_time: 600, start_date: '2025-02-17T09:00:00Z' },
           ]),
           { status: 200 },
         ),
@@ -236,15 +235,73 @@ describe('StravaService (unit)', () => {
 
       await service.sync(1, '2025-02-01');
 
-      expect(mockShoesService.findDefaultShoeId).toHaveBeenCalledWith(1);
-      const createCall = (workoutsService.createByExternalId as jest.Mock).mock.calls[0];
-      expect(createCall[1].shoeId).toBe(42);
+      expect(mockShoesService.findDefaultRunningShoeId).toHaveBeenCalledWith(1);
+      expect(mockShoesService.findDefaultWalkingShoeId).toHaveBeenCalledWith(1);
+      const runCall = (workoutsService.createByExternalId as jest.Mock).mock.calls[0];
+      const walkCall = (workoutsService.createByExternalId as jest.Mock).mock.calls[1];
+      expect(runCall[1].type).toBe(WorkoutType.RUNNING);
+      expect(runCall[1].shoeId).toBe(42);
+      expect(walkCall[1].type).toBe(WorkoutType.WALKING);
+      expect(walkCall[1].shoeId).toBeUndefined();
     });
 
-    it('when user has no default shoe, createByExternalId is called without shoeId', async () => {
+    it('when user has default walking shoe only, WALKING workout gets that shoeId, RUNNING gets undefined', async () => {
       mockPrisma.stravaConnection.findUnique.mockResolvedValue(conn);
       mockPrisma.user.update.mockResolvedValue({});
-      mockShoesService.findDefaultShoeId.mockResolvedValue(null);
+      mockShoesService.findDefaultRunningShoeId.mockResolvedValue(null);
+      mockShoesService.findDefaultWalkingShoeId.mockResolvedValue(99);
+      mockWorkoutsService.createByExternalId.mockResolvedValue({ created: true });
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            { id: 201, type: 'Run', name: 'Run', distance: 3000, moving_time: 900, start_date: '2025-02-16T08:00:00Z' },
+            { id: 202, type: 'Walk', name: 'Walk', distance: 2000, moving_time: 600, start_date: '2025-02-17T09:00:00Z' },
+          ]),
+          { status: 200 },
+        ),
+      );
+
+      await service.sync(1, '2025-02-01');
+
+      const runCall = (workoutsService.createByExternalId as jest.Mock).mock.calls[0];
+      const walkCall = (workoutsService.createByExternalId as jest.Mock).mock.calls[1];
+      expect(runCall[1].type).toBe(WorkoutType.RUNNING);
+      expect(runCall[1].shoeId).toBeUndefined();
+      expect(walkCall[1].type).toBe(WorkoutType.WALKING);
+      expect(walkCall[1].shoeId).toBe(99);
+    });
+
+    it('when user has both default running and walking shoes, each type gets correct shoeId', async () => {
+      mockPrisma.stravaConnection.findUnique.mockResolvedValue(conn);
+      mockPrisma.user.update.mockResolvedValue({});
+      mockShoesService.findDefaultRunningShoeId.mockResolvedValue(10);
+      mockShoesService.findDefaultWalkingShoeId.mockResolvedValue(20);
+      mockWorkoutsService.createByExternalId.mockResolvedValue({ created: true });
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([
+            { id: 301, type: 'Run', name: 'Run', distance: 5000, moving_time: 1800, start_date: '2025-02-16T08:00:00Z' },
+            { id: 302, type: 'Walk', name: 'Walk', distance: 2000, moving_time: 600, start_date: '2025-02-17T09:00:00Z' },
+          ]),
+          { status: 200 },
+        ),
+      );
+
+      await service.sync(1, '2025-02-01');
+
+      const runCall = (workoutsService.createByExternalId as jest.Mock).mock.calls[0];
+      const walkCall = (workoutsService.createByExternalId as jest.Mock).mock.calls[1];
+      expect(runCall[1].type).toBe(WorkoutType.RUNNING);
+      expect(runCall[1].shoeId).toBe(10);
+      expect(walkCall[1].type).toBe(WorkoutType.WALKING);
+      expect(walkCall[1].shoeId).toBe(20);
+    });
+
+    it('when user has no default shoes, createByExternalId is called without shoeId for both types', async () => {
+      mockPrisma.stravaConnection.findUnique.mockResolvedValue(conn);
+      mockPrisma.user.update.mockResolvedValue({});
+      mockShoesService.findDefaultRunningShoeId.mockResolvedValue(null);
+      mockShoesService.findDefaultWalkingShoeId.mockResolvedValue(null);
       mockWorkoutsService.createByExternalId.mockResolvedValue({ created: true });
       fetchMock.mockResolvedValueOnce(
         new Response(
@@ -271,7 +328,8 @@ describe('StravaService (unit)', () => {
     it('idempotent re-sync: when createByExternalId returns created false, workout is not updated (no shoe change)', async () => {
       mockPrisma.stravaConnection.findUnique.mockResolvedValue(conn);
       mockPrisma.user.update.mockResolvedValue({});
-      mockShoesService.findDefaultShoeId.mockResolvedValue(99);
+      mockShoesService.findDefaultRunningShoeId.mockResolvedValue(99);
+      mockShoesService.findDefaultWalkingShoeId.mockResolvedValue(null);
       fetchMock.mockResolvedValueOnce(
         new Response(
           JSON.stringify([

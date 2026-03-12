@@ -194,7 +194,7 @@ describe('Shoes integration (DB)', () => {
     expect(gone).toBeUndefined();
   });
 
-  it('set default: PATCH isDefault true sets shoe as default and list returns it', async () => {
+  it('set default for running: PATCH isDefaultForRunning true sets shoe and list returns it', async () => {
     const user = await prisma.user.findUnique({
       where: { email: THOMAS_EMAIL },
     });
@@ -205,27 +205,28 @@ describe('Shoes integration (DB)', () => {
     }
     await prisma.shoe.updateMany({
       where: { userId: user.id },
-      data: { isDefault: false },
+      data: { isDefaultForRunning: false, isDefaultForWalking: false },
     });
     const shoes = await shoesService.findAll(user.id);
     const shoe = shoes[0];
     if (!shoe) throw new Error('Need at least one shoe for thomas');
 
     const updated = await shoesService.update(shoe.id, user.id, {
-      isDefault: true,
+      isDefaultForRunning: true,
     });
-    expect(updated.isDefault).toBe(true);
+    expect(updated.isDefaultForRunning).toBe(true);
 
     const list = await shoesService.findAll(user.id);
-    const defaultInList = list.find((s) => s.isDefault);
+    const defaultInList = list.find((s) => s.isDefaultForRunning);
     expect(defaultInList).toBeDefined();
     expect(defaultInList?.id).toBe(shoe.id);
-    expect(defaultInList?.isDefault).toBe(true);
+    expect(await shoesService.findDefaultRunningShoeId(user.id)).toBe(shoe.id);
+    expect(await shoesService.findDefaultWalkingShoeId(user.id)).toBeNull();
 
-    await shoesService.update(shoe.id, user.id, { isDefault: false });
+    await shoesService.update(shoe.id, user.id, { isDefaultForRunning: false });
   });
 
-  it('change default: setting another shoe as default clears previous default', async () => {
+  it('change default: setting another shoe as default for running clears previous default for running', async () => {
     const user = await prisma.user.findUnique({
       where: { email: THOMAS_EMAIL },
     });
@@ -236,7 +237,7 @@ describe('Shoes integration (DB)', () => {
     }
     await prisma.shoe.updateMany({
       where: { userId: user.id },
-      data: { isDefault: false },
+      data: { isDefaultForRunning: false, isDefaultForWalking: false },
     });
     let shoes = await shoesService.findAll(user.id);
     let createdSecondId: number | null = null;
@@ -253,20 +254,54 @@ describe('Shoes integration (DB)', () => {
     }
     const [first, second] = shoes.slice(0, 2);
 
-    await shoesService.update(first.id, user.id, { isDefault: true });
+    await shoesService.update(first.id, user.id, { isDefaultForRunning: true });
     let list = await shoesService.findAll(user.id);
-    expect(list.find((s) => s.id === first.id)?.isDefault).toBe(true);
-    expect(list.find((s) => s.id === second.id)?.isDefault).toBe(false);
+    expect(list.find((s) => s.id === first.id)?.isDefaultForRunning).toBe(true);
+    expect(list.find((s) => s.id === second.id)?.isDefaultForRunning).toBe(false);
 
-    await shoesService.update(second.id, user.id, { isDefault: true });
+    await shoesService.update(second.id, user.id, { isDefaultForRunning: true });
     list = await shoesService.findAll(user.id);
-    expect(list.find((s) => s.id === first.id)?.isDefault).toBe(false);
-    expect(list.find((s) => s.id === second.id)?.isDefault).toBe(true);
+    expect(list.find((s) => s.id === first.id)?.isDefaultForRunning).toBe(false);
+    expect(list.find((s) => s.id === second.id)?.isDefaultForRunning).toBe(true);
 
-    await shoesService.update(second.id, user.id, { isDefault: false });
+    await shoesService.update(second.id, user.id, { isDefaultForRunning: false });
     if (createdSecondId) {
       await shoesService.remove(createdSecondId, user.id);
     }
+  });
+
+  it('one shoe can be default for both running and walking', async () => {
+    const user = await prisma.user.findUnique({
+      where: { email: THOMAS_EMAIL },
+    });
+    if (!user) {
+      throw new Error(
+        `Integration test requires user ${THOMAS_EMAIL}; run test-migrations first`,
+      );
+    }
+    await prisma.shoe.updateMany({
+      where: { userId: user.id },
+      data: { isDefaultForRunning: false, isDefaultForWalking: false },
+    });
+    const shoes = await shoesService.findAll(user.id);
+    const shoe = shoes[0];
+    if (!shoe) throw new Error('Need at least one shoe for thomas');
+
+    await shoesService.update(shoe.id, user.id, {
+      isDefaultForRunning: true,
+      isDefaultForWalking: true,
+    });
+    expect(await shoesService.findDefaultRunningShoeId(user.id)).toBe(shoe.id);
+    expect(await shoesService.findDefaultWalkingShoeId(user.id)).toBe(shoe.id);
+    const list = await shoesService.findAll(user.id);
+    const found = list.find((s) => s.id === shoe.id);
+    expect(found?.isDefaultForRunning).toBe(true);
+    expect(found?.isDefaultForWalking).toBe(true);
+
+    await shoesService.update(shoe.id, user.id, {
+      isDefaultForRunning: false,
+      isDefaultForWalking: false,
+    });
   });
 
   it('rejects shoe delete with 409 when shoe is linked to workouts', async () => {
