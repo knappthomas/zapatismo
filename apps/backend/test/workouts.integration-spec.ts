@@ -155,4 +155,75 @@ describe('Workouts integration (DB)', () => {
       expect((e as Error).message).toContain('Shoe not found or does not belong to user');
     }
   });
+
+  it('bulkAssignShoe: assigns one shoe to multiple workouts and persists', async () => {
+    const user = await prisma.user.findUnique({
+      where: { email: THOMAS_EMAIL },
+    });
+    if (!user) {
+      throw new Error(
+        `Integration test requires user ${THOMAS_EMAIL}; run test-migrations first`,
+      );
+    }
+
+    const shoe = await prisma.shoe.findFirst({
+      where: { userId: user.id },
+    });
+    if (!shoe) {
+      throw new Error('Integration test requires at least one shoe for thomas; run test-migrations');
+    }
+
+    const workouts = await prisma.workout.findMany({
+      where: { userId: user.id },
+      take: 2,
+      orderBy: { id: 'asc' },
+    });
+    if (workouts.length < 2) {
+      const w1 = await workoutsService.create(user.id, {
+        type: WorkoutType.RUNNING,
+        startTime: '2025-02-20T08:00:00.000Z',
+        endTime: '2025-02-20T09:00:00.000Z',
+        steps: 5000,
+        distanceKm: 5,
+        location: 'Bulk test 1',
+      });
+      const w2 = await workoutsService.create(user.id, {
+        type: WorkoutType.WALKING,
+        startTime: '2025-02-21T10:00:00.000Z',
+        endTime: '2025-02-21T11:00:00.000Z',
+        steps: 3000,
+        distanceKm: 2.5,
+        location: 'Bulk test 2',
+      });
+      workouts.length = 0;
+      workouts.push(
+        await prisma.workout.findUniqueOrThrow({ where: { id: w1.id } }),
+        await prisma.workout.findUniqueOrThrow({ where: { id: w2.id } }),
+      );
+    }
+
+    const workoutIds = workouts.map((w) => w.id);
+    const result = await workoutsService.bulkAssignShoe(user.id, {
+      workoutIds,
+      shoeId: shoe.id,
+    });
+
+    expect(result.length).toBe(workoutIds.length);
+    for (const dto of result) {
+      expect(dto.shoeId).toBe(shoe.id);
+      expect(dto.shoe).toBeDefined();
+      expect(dto.shoe?.id).toBe(shoe.id);
+      expect(dto.shoe?.brandName).toBe(shoe.brandName);
+      expect(dto.shoe?.shoeName).toBe(shoe.shoeName);
+    }
+
+    const after = await prisma.workout.findMany({
+      where: { id: { in: workoutIds } },
+      include: { shoe: true },
+    });
+    for (const w of after) {
+      expect(w.shoeId).toBe(shoe.id);
+      expect(w.shoe?.id).toBe(shoe.id);
+    }
+  });
 });

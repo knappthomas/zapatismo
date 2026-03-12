@@ -16,6 +16,7 @@ describe('WorkoutsService (unit)', () => {
       findMany: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
     },
     shoe: {
@@ -342,6 +343,93 @@ describe('WorkoutsService (unit)', () => {
         include: { shoe: { select: { id: true, brandName: true, shoeName: true } } },
       });
       expect(prisma.workout.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('bulkAssignShoe', () => {
+    it('assigns shoe to all given workouts when all belong to user and shoe is owned', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue({ id: 2, userId: 1 });
+      mockPrisma.workout.findMany
+        .mockResolvedValueOnce([{ ...workoutEntity, id: 1 }, { ...workoutEntity, id: 2 }])
+        .mockResolvedValueOnce([
+          { ...workoutEntity, id: 1, shoeId: 2, shoe: { id: 2, brandName: 'Nike', shoeName: 'Pegasus' } },
+          { ...workoutEntity, id: 2, shoeId: 2, shoe: { id: 2, brandName: 'Nike', shoeName: 'Pegasus' } },
+        ]);
+      mockPrisma.workout.updateMany.mockResolvedValue({ count: 2 });
+
+      const result = await service.bulkAssignShoe(userId, {
+        workoutIds: [1, 2],
+        shoeId: 2,
+      });
+
+      expect(prisma.shoe.findFirst).toHaveBeenCalledWith({
+        where: { id: 2, userId: 1 },
+      });
+      expect(prisma.workout.findMany).toHaveBeenCalledTimes(2);
+      expect((prisma.workout.findMany as jest.Mock).mock.calls[0][0]).toEqual({
+        where: { id: { in: [1, 2] }, userId: 1 },
+      });
+      expect(prisma.workout.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [1, 2] }, userId: 1 },
+        data: { shoeId: 2 },
+      });
+      expect(result.length).toBe(2);
+      expect(result[0].shoeId).toBe(2);
+      expect(result[0].shoe?.brandName).toBe('Nike');
+      expect(result[1].shoeId).toBe(2);
+    });
+
+    it('throws BadRequestException when workoutIds is empty', async () => {
+      try {
+        await service.bulkAssignShoe(userId, { workoutIds: [], shoeId: 1 });
+        fail('expected BadRequestException');
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+        expect((e as Error).message).toContain('At least one workout id');
+      }
+      expect(prisma.shoe.findFirst).not.toHaveBeenCalled();
+      expect(prisma.workout.findMany).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when shoeId is not owned by user', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue(null);
+
+      try {
+        await service.bulkAssignShoe(userId, { workoutIds: [1, 2], shoeId: 99 });
+        fail('expected BadRequestException');
+      } catch (e) {
+        expect(e).toBeInstanceOf(BadRequestException);
+        expect((e as Error).message).toContain('Shoe not found');
+      }
+      expect(prisma.workout.findMany).not.toHaveBeenCalled();
+      expect(prisma.workout.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when one or more workout IDs are not found or not owned', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue({ id: 2, userId: 1 });
+      mockPrisma.workout.findMany.mockResolvedValue([{ ...workoutEntity, id: 1 }]);
+
+      try {
+        await service.bulkAssignShoe(userId, { workoutIds: [1, 999], shoeId: 2 });
+        fail('expected NotFoundException');
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+        expect((e as Error).message).toContain('One or more workouts not found');
+      }
+      expect(prisma.workout.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when all workout IDs belong to another user', async () => {
+      mockPrisma.shoe.findFirst.mockResolvedValue({ id: 2, userId: 1 });
+      mockPrisma.workout.findMany.mockResolvedValue([]);
+
+      try {
+        await service.bulkAssignShoe(userId, { workoutIds: [1, 2], shoeId: 2 });
+        fail('expected NotFoundException');
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+      expect(prisma.workout.updateMany).not.toHaveBeenCalled();
     });
   });
 

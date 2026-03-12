@@ -105,6 +105,99 @@ describe('Workouts', () => {
           .should('be.visible')
           .and('contain', "You don't have a default shoe set");
       });
+
+      it('overview shows select column and allows selecting rows', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.visit('/workouts');
+        cy.get('[data-cy="workouts-list"]').should('be.visible');
+        cy.get('[data-cy="workouts-select-all"]').should('be.visible');
+        cy.get('[data-cy="workout-select-1"]').should('be.visible').check();
+        cy.get('[data-cy="workout-select-1"]').should('be.checked');
+      });
+
+      it('toolbar with Assign Shoe visible when at least one workout selected', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.visit('/workouts');
+        overviewPO.assignShoeToolbar.should('not.exist');
+        cy.get('[data-cy="workout-select-1"]').check();
+        overviewPO.assignShoeToolbar.should('be.visible');
+        overviewPO.assignShoeButton.should('be.visible').and('contain', 'Assign Shoe');
+      });
+
+      it('toolbar hidden when no workout selected', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.visit('/workouts');
+        cy.get('[data-cy="workout-select-1"]').check();
+        overviewPO.assignShoeToolbar.should('be.visible');
+        cy.get('[data-cy="workout-select-1"]').uncheck();
+        overviewPO.assignShoeToolbar.should('not.exist');
+      });
+
+      it('assign-shoe modal shows shoes dropdown and confirm', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.visit('/workouts');
+        cy.get('[data-cy="workout-select-1"]').check();
+        overviewPO.assignShoeButton.click();
+        overviewPO.assignShoeModal.should('be.visible');
+        overviewPO.assignShoeModal.contains('Assign shoe to selected workouts').should('be.visible');
+        overviewPO.assignShoeSelect.should('be.visible');
+        overviewPO.assignShoeConfirm.should('be.visible').and('contain', 'Update');
+        overviewPO.assignShoeCancel.should('be.visible');
+        overviewPO.assignShoeSelect.select('1');
+        overviewPO.assignShoeConfirm.should('not.be.disabled');
+      });
+
+      it('after bulk assign success modal closes and list shows assigned shoe', () => {
+        let getWorkoutsCallCount = 0;
+        cy.intercept('GET', '**/api/workouts', (req) => {
+          getWorkoutsCallCount += 1;
+          const fixture =
+            getWorkoutsCallCount === 1 ? 'workouts/loaded.json' : 'workouts/loaded-after-assign.json';
+          req.reply({ fixture });
+        }).as('getWorkouts');
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.intercept('PATCH', '**/api/workouts/bulk-assign-shoe', { statusCode: 200, body: [] }).as(
+          'bulkAssignShoe',
+        );
+        cy.visit('/workouts');
+        cy.wait('@getWorkouts');
+        cy.get('[data-cy="workout-select-2"]').check();
+        overviewPO.assignShoeButton.click();
+        overviewPO.assignShoeSelect.select('1');
+        overviewPO.assignShoeConfirm.click();
+        cy.wait('@bulkAssignShoe');
+        overviewPO.assignShoeModal.should('not.exist');
+        cy.get('[data-cy="workouts-list"]').within(() => {
+          cy.contains('Central Park').closest('tr').contains('Nike').should('be.visible');
+        });
+      });
+
+      it('closing assign-shoe modal without confirm does not call bulk-assign', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.intercept('PATCH', '**/api/workouts/bulk-assign-shoe', cy.spy().as('bulkAssignSpy'));
+        cy.visit('/workouts');
+        cy.get('[data-cy="workout-select-1"]').check();
+        overviewPO.assignShoeButton.click();
+        overviewPO.assignShoeModal.should('be.visible');
+        overviewPO.assignShoeCancel.click();
+        overviewPO.assignShoeModal.should('not.exist');
+        cy.get('@bulkAssignSpy').should('not.have.been.called');
+      });
+
+      it('assign-shoe modal with no shoes disables confirm and shows message', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/empty.json' });
+        cy.visit('/workouts');
+        cy.get('[data-cy="workout-select-1"]').check();
+        overviewPO.assignShoeButton.click();
+        overviewPO.assignShoeModal.should('be.visible');
+        overviewPO.assignShoeNoShoes
+          .should('be.visible')
+          .and('contain', 'You have no shoes');
+        overviewPO.assignShoeConfirm.should('be.disabled');
+      });
     });
 
     describe('Error Handling', () => {
@@ -137,6 +230,23 @@ describe('Workouts', () => {
         formPO.locationInput.type('Test Location');
         formPO.submitButton.click();
         formPO.formError.should('be.visible').and('contain', 'endTime');
+      });
+
+      it('assign-shoe modal shows error on bulk-assign failure', () => {
+        cy.intercept('GET', '**/api/workouts', { fixture: 'workouts/loaded.json' });
+        cy.intercept('GET', '**/api/shoes', { fixture: 'shoes/loaded.json' });
+        cy.intercept('PATCH', '**/api/workouts/bulk-assign-shoe', {
+          statusCode: 500,
+          fixture: 'workouts/error-500.json',
+        }).as('bulkAssignShoe');
+        cy.visit('/workouts');
+        cy.get('[data-cy="workout-select-1"]').check();
+        overviewPO.assignShoeButton.click();
+        overviewPO.assignShoeSelect.select('1');
+        overviewPO.assignShoeConfirm.click();
+        cy.wait('@bulkAssignShoe');
+        overviewPO.assignShoeError.should('be.visible').and('contain', 'Internal server error');
+        overviewPO.assignShoeModal.should('be.visible');
       });
     });
 

@@ -28,6 +28,19 @@ import { Workout } from '../../core/models/workout.model';
         <table class="table table-zebra">
           <thead>
             <tr>
+              @if (showSelectColumn()) {
+                <th class="w-10">
+                  <input
+                    type="checkbox"
+                    class="checkbox checkbox-sm"
+                    [checked]="isAllSelected()"
+                    [indeterminate]="isIndeterminate()"
+                    (change)="onSelectAllChange($event)"
+                    data-cy="workouts-select-all"
+                    [attr.aria-label]="'Select all workouts'"
+                  />
+                </th>
+              }
               <th>Type</th>
               <th>Start</th>
               <th>End</th>
@@ -42,6 +55,18 @@ import { Workout } from '../../core/models/workout.model';
           <tbody>
             @for (workout of workouts(); track workout.id) {
               <tr>
+                @if (showSelectColumn()) {
+                  <td>
+                    <input
+                      type="checkbox"
+                      class="checkbox checkbox-sm"
+                      [checked]="isSelected(workout.id)"
+                      (change)="onSelectionChange(workout.id, $event)"
+                      [attr.data-cy]="'workout-select-' + workout.id"
+                      [attr.aria-label]="'Select workout ' + workout.id"
+                    />
+                  </td>
+                }
                 <td><span class="badge badge-outline">{{ workout.type }}</span></td>
                 <td>{{ workout.startTime | date: 'short' }}</td>
                 <td>{{ workout.endTime | date: 'short' }}</td>
@@ -71,8 +96,44 @@ export class WorkoutsListPartComponent {
   readonly showActions = input(true);
   readonly showAddLink = input(true);
   readonly addLink = input('/workouts/new');
+  /** When true, show select column with per-row checkboxes and optional select-all. */
+  readonly showSelectColumn = input(false);
+  /** Currently selected workout ids (used when showSelectColumn is true). */
+  readonly selectedIds = input<number[]>([]);
 
   readonly deleteWorkout = output<Workout>();
+  /** Emitted when selection changes (new array of selected ids). */
+  readonly selectionChange = output<number[]>();
+
+  protected isSelected(id: number): boolean {
+    return this.selectedIds().includes(id);
+  }
+
+  protected isAllSelected(): boolean {
+    const workouts = this.workouts();
+    const ids = this.selectedIds();
+    return workouts.length > 0 && ids.length === workouts.length;
+  }
+
+  protected isIndeterminate(): boolean {
+    const ids = this.selectedIds();
+    return ids.length > 0 && !this.isAllSelected();
+  }
+
+  protected onSelectAllChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const ids = checked ? this.workouts().map((w) => w.id) : [];
+    this.selectionChange.emit(ids);
+  }
+
+  protected onSelectionChange(workoutId: number, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const current = this.selectedIds();
+    const next = checked
+      ? [...current, workoutId]
+      : current.filter((id) => id !== workoutId);
+    this.selectionChange.emit(next);
+  }
 
   protected shoeLabel(workout: Workout): string {
     if (workout.shoe) return `${workout.shoe.brandName} – ${workout.shoe.shoeName}`;
