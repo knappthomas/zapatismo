@@ -1,0 +1,59 @@
+# Production stack: MySQL + backend + frontend.
+# Usage on server: copy .env.production.example to .env.production, set REGISTRY_IMAGE_PREFIX, then:
+#   docker compose -f docker-compose.production.yml pull
+#   docker compose -f docker-compose.production.yml up -d
+# Env: .env.production (not in repo; create from .env.production.example).
+#
+# --- Switching to external (e.g. Scaleway Managed) MySQL ---
+# 1. Set DATABASE_URL in .env.production to the managed MySQL connection string.
+# 2. Remove or comment out the mysql-prod service and its volume.
+# 3. Remove backend-prod's depends_on: mysql-prod and the mysql-prod healthcheck dependency.
+# 4. Run: docker compose -f docker-compose.production.yml up -d
+# Backend will connect to the external database; no code or Dockerfile change.
+
+services:
+  mysql-prod:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-zapatismo}
+    volumes:
+      - mysql-prod-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - production
+
+  backend-prod:
+    image: ${REGISTRY_IMAGE_PREFIX}/zapatismo-backend:latest
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      mysql-prod:
+        condition: service_healthy
+    networks:
+      - production
+
+  frontend-prod:
+    image: ${REGISTRY_IMAGE_PREFIX}/zapatismo-frontend:latest
+    restart: unless-stopped
+    environment:
+      BACKEND_HOST: backend-prod
+    ports:
+      - "127.0.0.1:30081:80"
+    depends_on:
+      - backend-prod
+    networks:
+      - production
+
+networks:
+  production:
+    driver: bridge
+
+volumes:
+  mysql-prod-data:
