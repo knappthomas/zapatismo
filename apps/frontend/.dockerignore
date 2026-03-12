@@ -1,0 +1,8 @@
+# Build context: apps/frontend
+node_modules
+.angular
+dist
+coverage
+*.log
+.git
+.DS_Store

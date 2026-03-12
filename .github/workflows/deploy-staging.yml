@@ -1,0 +1,67 @@
+# Deploy staging on push to branch `staging`.
+# Builds backend and frontend images, pushes to ghcr.io, deploys via SSH, then DB reset + seed.
+# Secrets: STAGING_SSH_KEY, STAGING_SSH_HOST, STAGING_SSH_USER; optional STAGING_DEPLOY_PATH (repo path on server).
+
+name: Deploy staging
+
+on:
+  push:
+    branches: [staging]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/zapatismo-backend:staging
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/frontend
+          file: apps/frontend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/zapatismo-frontend:staging
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          envs: REGISTRY_IMAGE_PREFIX,STAGING_DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -e
+            cd "$STAGING_DEPLOY_PATH"
+            export REGISTRY_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository_owner }}"
+            docker compose -f docker-compose.staging.yml pull
+            docker compose -f docker-compose.staging.yml up -d
+            docker compose -f docker-compose.staging.yml exec -T backend-staging npx prisma migrate reset --force
+            docker compose -f docker-compose.staging.yml exec -T backend-staging npx ts-node prisma/seed.ts
+        env:
+          REGISTRY_IMAGE_PREFIX: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}

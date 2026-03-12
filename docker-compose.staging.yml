@@ -1,0 +1,52 @@
+# Staging stack: MySQL + backend + frontend.
+# Usage on server: copy .env.staging.example to .env.staging, set REGISTRY_IMAGE_PREFIX (e.g. ghcr.io/myorg), then:
+#   docker compose -f docker-compose.staging.yml pull
+#   docker compose -f docker-compose.staging.yml up -d
+# Env: .env.staging (not in repo; create from .env.staging.example).
+
+services:
+  mysql-staging:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-zapatismo}
+    volumes:
+      - mysql-staging-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - staging
+
+  backend-staging:
+    image: ${REGISTRY_IMAGE_PREFIX}/zapatismo-backend:staging
+    restart: unless-stopped
+    env_file: .env.staging
+    depends_on:
+      mysql-staging:
+        condition: service_healthy
+    networks:
+      - staging
+
+  frontend-staging:
+    image: ${REGISTRY_IMAGE_PREFIX}/zapatismo-frontend:staging
+    restart: unless-stopped
+    environment:
+      BACKEND_HOST: backend-staging
+    ports:
+      - "127.0.0.1:30080:80"
+    depends_on:
+      - backend-staging
+    networks:
+      - staging
+
+networks:
+  staging:
+    driver: bridge
+
+volumes:
+  mysql-staging-data:
