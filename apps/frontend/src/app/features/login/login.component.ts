@@ -12,6 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
     <div class="min-h-screen flex items-center justify-center bg-base-200">
       <div class="card w-full max-w-sm bg-base-100 shadow-xl" data-cy="login">
         <div class="card-body">
+          <img src="/logo.png" alt="Zapatismo" class="w-24 h-24 mx-auto mb-4 object-contain" data-cy="login-logo" />
           <h2 class="card-title justify-center text-2xl mb-4">Zapatismo</h2>
 
           @if (successMessage()) {

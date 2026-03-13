@@ -36,6 +36,12 @@ describe('Dashboard', () => {
       cy.contains('h2', 'My Shoes').should('be.visible');
       cy.contains('h2', 'Recent Workouts').should('be.visible');
     });
+
+    it('shows navbar logo with alt text Zapatismo and brand link navigates to dashboard', () => {
+      cy.get('[data-cy="navbar-logo"]').should('be.visible').and('have.attr', 'alt', 'Zapatismo');
+      cy.get('[data-cy="navbar-logo"]').parent('a').click();
+      cy.url().should('include', '/dashboard');
+    });
   });
 
   describe('e2e', () => {

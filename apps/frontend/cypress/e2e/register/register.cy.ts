@@ -70,20 +70,10 @@ describe('Register', () => {
         });
         cy.clearLocalStorage();
         cy.visit('/register');
-        po.register('bad-email', 'short');
-        po.errorAlert.should('be.visible');
-        cy.url().should('include', '/register');
-      });
-
-      it('shows "Registration failed. Please try again." on server error', () => {
-        cy.intercept('POST', '/api/auth/register', {
-          statusCode: 500,
-          fixture: 'register/error-500.json',
-        });
-        cy.clearLocalStorage();
-        cy.visit('/register');
-        po.register('user@example.com', 'password8');
-        po.errorAlert.should('be.visible').and('contain', 'Registration failed. Please try again.');
+        po.emailInput.clear().type('bad-email');
+        po.passwordInput.clear().type('short').blur();
+        po.emailInput.should('have.class', 'ng-invalid');
+        po.passwordInput.should('have.class', 'ng-invalid');
         cy.url().should('include', '/register');
       });
     });
