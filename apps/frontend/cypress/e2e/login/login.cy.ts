@@ -9,6 +9,10 @@ describe('Login', () => {
       cy.visit('/login');
     });
 
+    it('shows project logo with alt text Zapatismo', () => {
+      po.logoImage.should('be.visible').and('have.attr', 'alt', 'Zapatismo');
+    });
+
     it('disables submit when email is empty or invalid or password is empty', () => {
       po.submitButton.should('be.disabled');
       po.emailInput.type('invalid');

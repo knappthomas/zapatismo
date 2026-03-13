@@ -2,7 +2,8 @@
   "name": "zapatismo",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "prisma:migrate": "npx prisma migrate dev",

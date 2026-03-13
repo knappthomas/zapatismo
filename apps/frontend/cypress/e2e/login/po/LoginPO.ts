@@ -21,6 +21,10 @@ export class LoginPO extends MainPO {
     return this.root.find('[data-cy="login-error"]');
   }
 
+  get logoImage() {
+    return this.root.find('[data-cy="login-logo"]');
+  }
+
   login(email: string, password: string): void {
     this.emailInput.clear().type(email);
     this.passwordInput.clear().type(password);
