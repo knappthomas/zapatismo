@@ -45,11 +45,11 @@ const PASSWORD_MIN_LENGTH = 8;
               type="password"
               formControlName="password"
               class="input input-bordered w-full"
-              placeholder="Mindestens 8 Zeichen"
+              [placeholder]="'Mindestens ' + passwordMinLength + ' Zeichen'"
               autocomplete="new-password"
             />
             @if (form.get('password')?.invalid && form.get('password')?.touched) {
-              <span class="label text-error text-sm">Passwort muss mindestens {{ PASSWORD_MIN_LENGTH }} Zeichen haben.</span>
+              <span class="label text-error text-sm">Passwort muss mindestens {{ passwordMinLength }} Zeichen haben.</span>
             }
           </label>
 
@@ -80,7 +80,7 @@ export class UserCreateComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+  protected readonly passwordMinLength = PASSWORD_MIN_LENGTH;
   protected readonly saving = signal(false);
   protected readonly formError = signal('');
 

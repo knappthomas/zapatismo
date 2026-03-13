@@ -9,7 +9,10 @@ import { AuthService } from '../core/auth/auth.service';
   template: `
     <div class="navbar bg-base-200 shadow-sm">
       <div class="flex-1">
-        <a routerLink="/dashboard" class="btn btn-ghost text-xl">Zapatismo</a>
+        <a routerLink="/dashboard" class="btn btn-ghost gap-2 text-xl">
+          <img src="/logo.png" alt="Zapatismo" class="h-8 w-auto object-contain" data-cy="navbar-logo" />
+          Zapatismo
+        </a>
       </div>
       <div class="flex-none gap-2">
         <ul class="menu menu-horizontal px-1">
